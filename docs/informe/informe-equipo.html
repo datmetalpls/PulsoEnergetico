@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Pulso Energético — Informe para el equipo</title>
+<style>
+  @page { size: A4; margin: 16mm 16mm 18mm; }
+  :root { --verde:#14532d; --verde2:#1f7a4a; --tierra:#8a5a2b; --azul:#1d4f7a; --gris:#5b6470; --borde:#d9dee3; --fondo:#f4f6f3; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color:#1b1f24; font-size: 10.5pt; line-height: 1.45; margin:0; }
+  h1 { font-size: 26pt; color: var(--verde); margin: 0 0 4mm; line-height:1.1; }
+  h2 { font-size: 15pt; color: var(--verde); margin: 7mm 0 2.5mm; padding-bottom: 1.5mm; border-bottom: 2px solid var(--verde2); break-after: avoid; }
+  h3 { font-size: 11.5pt; color: var(--azul); margin: 4mm 0 1.5mm; break-after: avoid; }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 2.5mm; padding-left: 5mm; }
+  li { margin-bottom: 1mm; }
+  table { width: 100%; border-collapse: collapse; margin: 1.5mm 0 3.5mm; font-size: 9.5pt; break-inside: avoid; }
+  th { background: var(--verde); color: #fff; text-align: left; padding: 1.8mm 2.2mm; font-weight: 600; }
+  td { border-bottom: 1px solid var(--borde); padding: 1.6mm 2.2mm; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafbfa; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  code { font-family: Menlo, monospace; font-size: 8.8pt; background: #eef1ee; padding: 0.3mm 1mm; border-radius: 1mm; }
+  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page; }
+  .cover .band { height: 7mm; background: linear-gradient(90deg, var(--tierra) 0 33%, var(--azul) 33% 66%, var(--verde2) 66% 100%); border-radius: 1mm; }
+  .cover .sub { font-size: 14pt; color: var(--gris); margin-bottom: 10mm; }
+  .cover .meta td { border: none; padding: 1mm 0; font-size: 10.5pt; }
+  .cover .meta td:first-child { color: var(--gris); width: 42mm; }
+  .tag { display:inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: .04em; padding: .8mm 2.2mm; border-radius: 1mm; background:#1b1f24; color:#fff; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 3mm 0 4mm; }
+  .kpi { border: 1px solid var(--borde); border-radius: 2mm; padding: 3mm; background: var(--fondo); }
+  .kpi b { display: block; font-size: 17pt; color: var(--verde); line-height: 1.1; }
+  .kpi span { font-size: 8.8pt; color: var(--gris); }
+  .note { border-left: 3px solid var(--tierra); background: #fbf6f0; padding: 2.5mm 3.5mm; margin: 2mm 0 3.5mm; font-size: 9.8pt; }
+  .ok { color: var(--verde2); font-weight: 700; }
+  .warn { color: #a15c00; font-weight: 700; }
+  figure { margin: 2mm 0 4mm; break-inside: avoid; }
+  figure img { width: 100%; max-height: 105mm; object-fit: contain; object-position: top left; border: 1px solid var(--borde); border-radius: 1.5mm; }
+  figcaption { font-size: 8.8pt; color: var(--gris); margin-top: 1.2mm; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .page { break-before: page; }
+  .formula { font-family: Menlo, monospace; background: var(--fondo); border:1px solid var(--borde); padding: 2.5mm 3.5mm; border-radius: 1.5mm; margin: 1.5mm 0 3mm; font-size: 9.6pt; }
+  .small { font-size: 8.8pt; color: var(--gris); }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div>
+    <div class="band"></div>
+    <div style="height:28mm"></div>
+    <span class="tag">DATOS SIMULADOS · PROTOTIPO</span>
+    <h1 style="margin-top:5mm">Pulso Energético</h1>
+    <div class="sub">Informe de estado para el equipo · Hackatón Chile–Ecuador</div>
+    <p style="font-size:12pt; max-width:150mm">Una app web que le dice al encargado de un recinto comunitario <b>qué está encendido</b>, <b>cuánta energía lleva consumida</b> y <b>cuánto le falta para su límite</b>. La demo local está lista, probada y auditada. Faltan tres tareas antes de presentar.</p>
+  </div>
+  <table class="meta">
+    <tr><td>Fecha</td><td>27 de noviembre de 2026</td></tr>
+    <tr><td>Repositorio</td><td>github.com/datmetalpls/PulsoEnergetico (público)</td></tr>
+    <tr><td>Versión revisada</td><td>commit <code>1f1dbd8</code> en <code>main</code></td></tr>
+    <tr><td>ODS</td><td>ODS 7 (principal). ODS 13 como hipótesis por validar</td></tr>
+    <tr><td>Equipo de agentes</td><td>Claude (líder e integrador), Codex, Antigravity (Hydrogen y Neon) y OpenCode con DeepSeek</td></tr>
+  </table>
+</section>
+
+<h2>1. Resumen</h2>
+<p>El recorrido obligatorio funciona de punta a punta en la máquina local con Docker. Pasa las pruebas automáticas, la prueba de aceptación del jurado y una revisión en navegador. Cuatro auditorías no encontraron fallos críticos, y los hallazgos altos ya están corregidos. Para presentar faltan <b>tres tareas</b>: probar sin Wi-Fi, grabar el video de respaldo y ensayar los 90 s.</p>
+<div class="kpis">
+  <div class="kpi"><b>19/19</b><span>comprobaciones de aceptación contra la API</span></div>
+  <div class="kpi"><b>21 + 2</b><span>pruebas Django en verde (imagen + host)</span></div>
+  <div class="kpi"><b>0</b><span>hallazgos críticos en 4 auditorías</span></div>
+  <div class="kpi"><b>35 s</b><span>hasta la alerta en el modo presentación</span></div>
+</div>
+
+<h2>2. Qué hace</h2>
+<table>
+  <tr><th style="width:30%">Función</th><th>Detalle</th></tr>
+  <tr><td>Dos localidades</td><td><b>Cuenca</b> (Ecuador) y <b>Puente Alto</b> (Chile). Cada una tiene un <b>banco de pruebas de 5 V</b> y una <b>sede comunitaria ficticia</b>. Cada recinto guarda su propio ensayo, independiente de los demás.</td></tr>
+  <tr><td>Control por zona</td><td>Salón principal (160 W) y sala de reuniones (80 W, regulable de 0 a 100 %). En el banco, la carga de 5 V tiene una perilla de 0 a 0,80 A; a 0,40 A da 2 W.</td></tr>
+  <tr><td>Tres cifras</td><td>Potencia actual (W), energía acumulada (Wh o kWh) y lo que falta para el límite, con el tiempo estimado. Sin consumo, muestra «Consumo detenido».</td></tr>
+  <tr><td>Dos gráficos</td><td>Potencia en el tiempo, y energía acumulada con la línea del umbral. Al apagar, la curva queda plana.</td></tr>
+  <tr><td>Alerta única</td><td>Banda roja persistente, visible aunque el audio esté silenciado, con pitido opcional de 0,8 s. Hay una sola alerta por ensayo. La carga no se apaga sola.</td></tr>
+  <tr><td>Día, tarde y noche</td><td>Reloj del escenario con «Siguiente franja», que no suma ni borra energía. La sede avanza a ×60 (1 s real = 1 min simulado); el banco, en tiempo real.</td></tr>
+  <tr><td>Ahorro</td><td>Tarjeta: «Apagar la sala vacía al terminar la reunión ahorra 0,240 kWh por jornada» (estimación simulada).</td></tr>
+  <tr><td>Modo presentación</td><td>Recorre Día → Tarde → Noche con textos grandes y un botón «Siguiente paso». Usa un presupuesto de demostración de 0,10 kWh.</td></tr>
+  <tr><td>Estado persistente</td><td>Refrescar, abrir otra pestaña o reiniciar Docker muestra el mismo ensayo.</td></tr>
+  <tr><td>Permisos</td><td>Operadores por localidad, un operador de demo para ambas y un observador de solo lectura. El servidor valida cada acción.</td></tr>
+</table>
+
+<h3>Cómo calcula la energía (siempre en el servidor)</h3>
+<div class="formula">Potencia (W) = V × A &nbsp;&nbsp;·&nbsp;&nbsp; Energía del intervalo (Wh) = potencia anterior × segundos / 3600</div>
+<p>Las lecturas repetidas no suman dos veces. Las que llegan fuera de orden se guardan, pero no se integran. Un corte de conexión queda marcado «sin datos», sin consumo inventado. El tiempo del ensayo, que sí cuenta para los Wh, se lleva separado de la hora del escenario, que solo narra el día.</p>
+
+<h3>Arquitectura</h3>
+<p>Django 5.2 sirve la interfaz Angular 19 + Bootstrap y la API <code>/api/</code> desde el mismo origen. PostgreSQL 17 corre en una red interna de Docker Compose, sin puerto publicado. <code>docker compose up</code> aplica migraciones y carga los escenarios sin duplicar.</p>
+
+<h2>3. Cómo usarlo</h2>
+<ol>
+  <li>Instalar Docker Desktop y clonar el repositorio.</li>
+  <li>Primera vez: <code>docker compose up --build -d</code>. Después: <code>docker compose up -d</code> (funciona sin Internet). <b>No usar</b> <code>docker compose down -v</code>, porque borra los datos.</li>
+  <li>Abrir <code>http://localhost:8080</code> y pulsar <b>«Entrar como operador demo»</b>.</li>
+  <li>Elegir Cuenca › Centro Comunitario Río Tomebamba. En el menú <b>☰</b>, abrir <b>Modo presentación</b> y pulsar «Siguiente paso» tres veces.</li>
+  <li>Al terminar, pulsar «Restaurar presupuesto a 0,60 kWh» y luego «Salir».</li>
+</ol>
+<table>
+  <tr><th>Usuario</th><th>Contraseña (solo demo local)</th><th>Puede</th></tr>
+  <tr><td><code>operador_demo</code></td><td><code>Demo-2026</code></td><td>Operar Cuenca y Puente Alto</td></tr>
+  <tr><td><code>operador_cuenca</code></td><td><code>Cuenca-demo-2026</code></td><td>Operar Cuenca</td></tr>
+  <tr><td><code>operador_puente</code></td><td><code>Puente-demo-2026</code></td><td>Operar Puente Alto</td></tr>
+  <tr><td><code>observador</code></td><td><code>Observador-demo-2026</code></td><td>Solo mirar</td></tr>
+</table>
+<div class="note">Estas contraseñas ya son públicas en el repositorio y sirven solo en localhost. El script de la EC2 <b>se niega a desplegar</b> si alguna contraseña falta o coincide con la pública.</div>
+
+
+<h2>4. Verificación</h2>
+<p>Todas estas pruebas las ejecutó el integrador sobre el commit indicado. No son solo lo que informaron los agentes.</p>
+<table>
+  <tr><th>Prueba</th><th>Resultado</th></tr>
+  <tr><td>5 V × 0,40 A</td><td><span class="ok">2,00 W</span></td></tr>
+  <tr><td>18 s de consumo</td><td><span class="ok">0,0100 Wh</span></td></tr>
+  <tr><td>10 s apagado</td><td><span class="ok">se mantiene en 0,0100 Wh</span></td></tr>
+  <tr><td>36 s de consumo efectivo</td><td><span class="ok">0,0200 Wh y una sola alerta</span></td></tr>
+  <tr><td>Siguiente franja</td><td><span class="ok">conserva Wh y tiempo del ensayo</span></td></tr>
+  <tr><td>Reenviar el mismo lote de lecturas</td><td><span class="ok">no duplica Wh ni la alerta</span></td></tr>
+  <tr><td>Refrescar o abrir una segunda pestaña</td><td><span class="ok">mismo ensayo y mismo acumulado</span></td></tr>
+  <tr><td>Apagar la sala en Cuenca</td><td><span class="ok">la sala marca 0 W y conserva su energía; el total baja de 240 W a 160 W; Puente Alto no cambia</span></td></tr>
+  <tr><td>Prueba inversa en Puente Alto</td><td><span class="ok">igual, y Cuenca no cambia</span></td></tr>
+  <tr><td>Permisos</td><td><span class="ok">el observador y el operador de la otra localidad reciben 403</span></td></tr>
+  <tr><td>Navegador a 1440 y 390 px</td><td><span class="ok">sin desborde y 0 errores de consola</span></td></tr>
+  <tr><td>Segundo arranque sin descargas</td><td><span class="ok">conserva los datos</span> (con <code>--no-build --pull never</code>)</td></tr>
+</table>
+<p class="small">Comando para repetirla: <code>python3 -I scripts/acceptance.py .env.example contracts/telemetry.example.json</code>. Debe dar 19/19 PASS.</p>
+
+<h2>5. Auditoría</h2>
+<table>
+  <tr><th>Auditoría (agente)</th><th class="n">Crítica</th><th class="n">Alta</th><th class="n">Media</th><th class="n">Baja</th><th class="n">Nota</th></tr>
+  <tr><td>Seguridad (Codex)</td><td class="n">0</td><td class="n">2</td><td class="n">4</td><td class="n">3</td><td class="n">1</td></tr>
+  <tr><td>Legibilidad (Antigravity)</td><td class="n">0</td><td class="n">1</td><td class="n">5</td><td class="n">5</td><td class="n">1</td></tr>
+  <tr><td>Arquitectura (Claude)</td><td class="n">0</td><td class="n">2</td><td class="n">4</td><td class="n">4</td><td class="n">3</td></tr>
+  <tr><td>QA (OpenCode + DeepSeek)</td><td class="n">0</td><td class="n">0</td><td class="n">4</td><td class="n">5</td><td class="n">7</td></tr>
+</table>
+<p><b>Corregido:</b></p>
+<ul>
+  <li>Credenciales de la EC2 obligatorias y privadas.</li>
+  <li>Límite de intentos de inicio de sesión.</li>
+  <li>Las entradas inválidas responden 400 en lugar de 500.</li>
+  <li><code>sqlparse</code> actualizado.</li>
+  <li>El build falla si la interfaz no compila, y el contenedor ya no corre como root.</li>
+  <li>Una pestaña oculta ya no detiene el conteo de energía.</li>
+  <li>La perilla muestra su valor aunque la carga esté apagada.</li>
+  <li>Los sliders no envían una petición por cada movimiento.</li>
+  <li>Avisos visibles para 403, 409 y 429.</li>
+  <li>Accesibilidad AA y README.</li>
+</ul>
+<p>Además se aplicó la <b>revisión de Alex</b>: tarjeta de ahorro, dos columnas, modo presentación, escala ×60 visible, guía 1-2-3, entrada rápida y menú ☰. Los informes completos están en <code>audits/</code>.</p>
+
+<h2>6. Pendientes antes de presentar</h2>
+<table>
+  <tr><th style="width:5%">#</th><th>Tarea</th><th style="width:26%">Por qué</th><th style="width:16%">Responsable</th></tr>
+  <tr><td>1</td><td>Arrancar con el <b>Wi-Fi apagado</b> (<code>docker compose up -d</code>, sin <code>--build</code>) y hacer el recorrido</td><td>La sala puede no tener Internet</td><td>Por asignar</td></tr>
+  <tr><td>2</td><td>Grabar el <b>video de respaldo</b> del modo presentación y guardarlo fuera del laboratorio</td><td>Último recurso si todo falla</td><td>Por asignar</td></tr>
+  <tr><td>3</td><td><b>Ensayar los 90 s</b> con cronómetro (<code>docs/08-guion-90s.md</code>)</td><td>El modo presentación tarda ~35 s</td><td>Por asignar</td></tr>
+  <tr><td>4</td><td>(Opcional) Ejecutar <code>scripts/deploy-ec2.sh</code> en el Learner Lab; nunca usar Reset</td><td>Respaldo y evidencia en la nube</td><td>Por asignar</td></tr>
+</table>
+
+<h3>Limitaciones conocidas</h3>
+<ul>
+  <li>Todos los datos son simulados. Los beneficios de ahorro y climáticos son <b>hipótesis por validar</b>.</li>
+  <li>Quedan para la siguiente etapa: reporte de voz, Discord, importación de Wokwi, hardware (Pico y Zero W) y AWS en producción.</li>
+  <li>En la EC2 la app iría por HTTP, sin cifrado: el puerto solo debe abrirse durante la demo.</li>
+  <li>Los avisos de npm en Angular, ninguno crítico, se resolverán con una actualización después de la demo.</li>
+  <li>Detalle menor: en la sede, el texto de la alerta muestra «100,0000 Wh» en lugar de «0,100 kWh».</li>
+  <li>Siguiente ronda de interfaz (Alex 9–13): íconos SVG, logo, barra fija en móvil, costo ilustrativo y fuente local.</li>
+</ul>
+
+<h3>Preguntas para el equipo</h3>
+<ul>
+  <li>¿Hay un logo aprobado de la hackatón para el encabezado?</li>
+  <li>¿Quién presenta y quién maneja el equipo durante los 90 s?</li>
+  <li>¿Usamos la EC2 o nos quedamos solo con la demo local y el video?</li>
+</ul>
+
+
+<h2 class="page">7. Capturas (27-11-2026)</h2>
+<div style="display:grid; grid-template-columns: 1.05fr 1fr; gap:5mm; align-items:start">
+  <figure style="margin:0"><img style="max-height:225mm" src="../evidencia/revision-alex-presentacion-alerta.png" alt="Modo presentación, paso Noche"><figcaption>Modo presentación, paso Noche: alerta a los ~35 s reales, resumen del ensayo y tarjeta de ahorro.</figcaption></figure>
+  <div>
+    <figure style="margin-top:0"><img src="../evidencia/revision-alex-menu-1440.png" alt="Menú hamburguesa"><figcaption>Menú ☰: las acciones secundarias salen del encabezado.</figcaption></figure>
+    <figure><img src="../evidencia/navegador-final-1440.png" alt="Banco con alerta"><figcaption>Banco de 5 V: 0,020 Wh con alerta; el gráfico de potencia muestra el tramo apagado.</figcaption></figure>
+    <figure><img style="max-height:80mm; width:auto" src="../evidencia/revision-alex-390.png" alt="Vista móvil"><figcaption>Vista móvil a 390 px.</figcaption></figure>
+  </div>
+</div>
+</body>
+</html>
