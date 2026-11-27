@@ -39,3 +39,10 @@ Después: **F5** → ▶ Reproducir. El comando cierra el ensayo anterior, abre 
 
 ## Fuera del guion (no mostrar hoy)
 Puente Alto, la comparación de jornada (P2), el reporte de voz, Discord, Wokwi, el hardware, el botón ×300, «Siguiente franja» y el análisis ODS 13 (P3). Solo se nombran como «siguiente etapa» en el cierre.
+
+## Actualización 2026-11-27: usar el **Modo presentación** (revisión de Alex)
+1. En http://localhost:8080 pulsa «Entrar como operador demo» (solo aparece en localhost) y elige Cuenca › Centro Comunitario Río Tomebamba.
+2. Abre ☰ y elige **Modo presentación**. Pulsa «Siguiente paso» tres veces: **Día** (ensayo nuevo, presupuesto de demostración 0,10 kWh, salón y sala encendidos: 240 W), **Tarde** (sala apagada: 160 W) y **Noche** (la alerta llega a unos **35 s** reales; medido 34–35 s).
+3. Muestra la tarjeta «Apagar la sala vacía al terminar la reunión ahorra 0,240 kWh por jornada» (estimación simulada).
+4. Refresca para demostrar que el estado se recupera.
+5. Al terminar: «Restaurar presupuesto a 0,60 kWh» y «Salir».
