@@ -1,0 +1,151 @@
+{
+  "contract_version": "0.1",
+  "data_label": "Datos simulados",
+  "server_time": "2026-11-27T13:00:18Z",
+  "locality": {
+    "slug": "cuenca",
+    "name": "Cuenca",
+    "country": "Ecuador",
+    "timezone": "America/Guayaquil"
+  },
+  "site": {
+    "slug": "cuenca-banco",
+    "name": "Banco de pruebas 5 V",
+    "kind": "bench",
+    "fictitious": false,
+    "budget_kwh_day": null,
+    "sample_interval_s": 1
+  },
+  "sources_available": [
+    "simulator",
+    "wokwi_import"
+  ],
+  "active_source": "simulator",
+  "hardware": {
+    "simulated_board": "Raspberry Pi Pico (Wokwi)",
+    "planned_board": "Raspberry Pi Zero W (montaje físico previsto)"
+  },
+  "permissions": {
+    "role": "operator",
+    "can_operate": true
+  },
+  "session": {
+    "id": "3f2b8c1e-0000-4000-8000-000000000001",
+    "status": "running",
+    "started_at": "2026-11-27T13:00:00Z",
+    "playing": true,
+    "speed": 1,
+    "connected": true,
+    "elapsed_s": 18,
+    "scenario_clock": "08:00:18",
+    "band": "day",
+    "band_label": "Día",
+    "threshold_wh": 0.02,
+    "energy_wh": 0.01,
+    "remaining_wh": 0.01,
+    "total_power_w": 2.0,
+    "time_to_threshold_s": 18,
+    "status_label": "Consumiendo",
+    "alert_fired": false
+  },
+  "zones": [
+    {
+      "slug": "carga-5v",
+      "name": "Carga simulada 5 V",
+      "kind": "dc_load",
+      "dimmable": false,
+      "simulated_control": true,
+      "on": true,
+      "indicator": {
+        "led": "green",
+        "label": "Carga habilitada"
+      },
+      "voltage_v": 5.0,
+      "current_a": 0.4,
+      "max_current_a": 0.8,
+      "intensity_pct": null,
+      "power_w": 2.0,
+      "energy_wh": 0.01,
+      "on_seconds": 18
+    }
+  ],
+  "alerts": [],
+  "gaps": [],
+  "series": {
+    "carga-5v": [
+      {
+        "t_s": 0,
+        "power_w": 2.0,
+        "energy_wh": 0.0
+      },
+      {
+        "t_s": 3,
+        "power_w": 2.0,
+        "energy_wh": 0.001667
+      },
+      {
+        "t_s": 6,
+        "power_w": 2.0,
+        "energy_wh": 0.003333
+      },
+      {
+        "t_s": 9,
+        "power_w": 2.0,
+        "energy_wh": 0.005
+      },
+      {
+        "t_s": 12,
+        "power_w": 2.0,
+        "energy_wh": 0.006667
+      },
+      {
+        "t_s": 15,
+        "power_w": 2.0,
+        "energy_wh": 0.008333
+      },
+      {
+        "t_s": 18,
+        "power_w": 2.0,
+        "energy_wh": 0.01
+      }
+    ],
+    "total": [
+      {
+        "t_s": 0,
+        "power_w": 2.0,
+        "energy_wh": 0.0
+      },
+      {
+        "t_s": 3,
+        "power_w": 2.0,
+        "energy_wh": 0.001667
+      },
+      {
+        "t_s": 6,
+        "power_w": 2.0,
+        "energy_wh": 0.003333
+      },
+      {
+        "t_s": 9,
+        "power_w": 2.0,
+        "energy_wh": 0.005
+      },
+      {
+        "t_s": 12,
+        "power_w": 2.0,
+        "energy_wh": 0.006667
+      },
+      {
+        "t_s": 15,
+        "power_w": 2.0,
+        "energy_wh": 0.008333
+      },
+      {
+        "t_s": 18,
+        "power_w": 2.0,
+        "energy_wh": 0.01
+      }
+    ]
+  },
+  "context_card": null
+}
