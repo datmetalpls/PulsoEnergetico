@@ -28,6 +28,9 @@ Las contraseñas vienen de `.env.example`. Para un servidor real, crea un `.env`
 - El estado se recupera al refrescar la página.
 - La energía se calcula en el backend: `Wh = potencia anterior × segundos / 3600`.
 
+## Discord (opcional)
+La app puede publicar la alerta de umbral y el reporte en un canal de Discord mediante un webhook. Sin webhook muestra «Simulación local». Configuración local y en EC2, verificación y cómo desactivarlo: **[docs/09-discord.md](docs/09-discord.md)**. La URL del webhook es secreta: solo va en `.env`, nunca en el repositorio.
+
 ## Probar
 ```sh
 docker compose exec -T web python manage.py test                                  # 13 pruebas Django
@@ -40,7 +43,7 @@ python3 -I scripts/acceptance.py .env.example contracts/telemetry.example.json  
 | `backend/` | Django 5.2 + PostgreSQL 17: motor de energía, simulador y API `/api/` |
 | `frontend/` | Angular 19 + Bootstrap (servido por Django en el mismo origen) |
 | `contracts/` | Ejemplos JSON del contrato entre la interfaz y el backend |
-| `docs/` | Ficha (00), tablero (01), contrato (02), wireframe (03), resultados (05), plan AWS (06), riesgos (07) y guion de 90 s (08) |
+| `docs/` | Ficha (00), tablero (01), contrato (02), wireframe (03), resultados (05), plan AWS (06), riesgos (07), guion de 90 s (08) y Discord (09) |
 | `scripts/` | Prueba de aceptación, despliegue en EC2 y apagado |
 | `audits/` | Informes de auditoría (seguridad, legibilidad, QA y arquitectura) |
 
