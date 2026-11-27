@@ -1,4 +1,26 @@
-# Pulso Energético — Identidad corporativa v1.0
+# Pulso Energético — Identidad oficial vigente
+
+> **Decisión oficial (2026-11-27):** La identidad oficial de **Pulso Energético** es **`sello-latino`** (**Sello Cartel Latino**, ubicado en [`design/brand/sello-latino/vector/`](./sello-latino/vector/)).
+> Las propuestas anteriores **`v1`**, **`v2`** y **`v3`** quedan registradas exclusivamente como **exploraciones archivadas** de referencia histórica y no deben utilizarse como marca activa de la aplicación.
+
+## Identidad oficial (`sello-latino`)
+
+- **Vectores oficiales:** [`sello-latino/vector/`](./sello-latino/vector/) (`sello-completo*.svg`, `sello-simple*.svg`, `sello-mini*.svg` en variantes petróleo, crema, dorado y negro; [`NOTAS.md`](./sello-latino/vector/NOTAS.md) y lámina de aplicación [`aplicacion-16x9.png`](./sello-latino/vector/aplicacion-16x9.png)).
+- **Tokens y tipografía:** [`tokens.css`](./tokens.css) (`--pe-petroleo`, `--pe-crema`, `--pe-dorado`, verdes ODS 7, alerta) y [`fonts/`](./fonts/) (**Fraunces** y **DM Sans**, licencia SIL OFL 1.1).
+- **Integración en el frontend (`frontend/`):**
+  - Encabezado con `sello-mini.svg` junto a «Pulso Energético» en Fraunces (≤ 2 líneas en 390 px).
+  - Login editorial con `sello-completo.svg`, kicker «HACKATÓN ECUADOR × CHILE», titular en Fraunces y bajada «La energía de tu sede, a la vista.».
+  - Favicon SVG/PNG desde `sello-mini`, `apple-touch-icon-180.png` desde `sello-simple` sobre petróleo y `og-image-1200x630.png` recompuesta desde `aplicacion-16x9`.
+  - Temas Día, Tarde y Noche tematizados con `--pe-*` en cumplimiento WCAG AA (≥ 4,5:1 texto, ≥ 3:1 UI).
+  - Panel de Modo presentación y tarjeta de ahorro con `sello-simple` (y `sello-completo` pequeño en la lámina final de Noche).
+
+---
+
+## Exploraciones archivadas (v1, v2 y v3)
+
+La documentación original de `v1` (Concepto 01 / Pulso-rayo), junto con las carpetas `v2/` y `v3/` («Casa que late»), se conserva a continuación únicamente como archivo histórico.
+
+### Archivo histórico — Identidad corporativa v1.0
 
 ## Recomendación
 

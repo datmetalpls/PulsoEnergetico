@@ -49,6 +49,13 @@
       <header class="pulso-card pulso-header p-2 px-md-3 mb-3" aria-label="Estado general del recinto">
         <div class="header-row-top">
           <div class="header-brand-group">
+            <img
+              class="header-seal sello-clip-mini"
+              src="assets/brand/sello-mini.svg"
+              alt=""
+              width="38"
+              height="38"
+            />
             <h1 class="header-title fw-bold mb-0">Pulso Energético</h1>
             <span class="badge-sim">{{ s.data_label }}</span>
           </div>
@@ -379,6 +386,13 @@
         >
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <div class="d-flex flex-wrap align-items-center gap-2">
+              <img
+                class="presentation-seal sello-clip-simple"
+                src="assets/brand/sello-simple.svg"
+                alt="Sello Pulso Energético"
+                width="44"
+                height="44"
+              />
               <span class="badge-sim">Modo presentación</span>
               <span class="badge-pulso-secondary tabular-nums">
                 Presupuesto de demostración: 0,10 kWh
@@ -462,20 +476,31 @@
               </div>
             } @else {
               <div class="band-danger p-3 mb-3" role="status">
-                <div class="fw-bold fs-5 mb-1">
-                  Resumen del ensayo · Presupuesto alcanzado ({{ fmtEnergy(s.session.energy_wh, 'venue') }})
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                  <div>
+                    <div class="fw-bold fs-5 mb-1">
+                      Resumen del ensayo · Presupuesto alcanzado ({{ fmtEnergy(s.session.energy_wh, 'venue') }})
+                    </div>
+                    <div class="small fw-semibold mb-1 tabular-nums">
+                      Tiempo simulado: {{ fmtDuration(s.session.elapsed_s) }} ·
+                      Umbral: {{ fmtEnergy(s.session.threshold_wh, 'venue') }} ·
+                      Potencia actual: {{ fmtPower(s.session.total_power_w) }}
+                      @if (store.presentationAlertElapsedMs(); as realMs) {
+                        · Tiempo real medido: {{ fmtDecimal(realMs / 1000, 1) }} s
+                      }
+                    </div>
+                    @if (store.sessionReport(); as rep) {
+                      <div class="small mb-0">{{ rep.text }}</div>
+                    }
+                  </div>
+                  <img
+                    class="presentation-final-seal sello-clip-completo"
+                    src="assets/brand/sello-completo.svg"
+                    alt="Sello completo Pulso Energético"
+                    width="68"
+                    height="68"
+                  />
                 </div>
-                <div class="small fw-semibold mb-1 tabular-nums">
-                  Tiempo simulado: {{ fmtDuration(s.session.elapsed_s) }} ·
-                  Umbral: {{ fmtEnergy(s.session.threshold_wh, 'venue') }} ·
-                  Potencia actual: {{ fmtPower(s.session.total_power_w) }}
-                  @if (store.presentationAlertElapsedMs(); as realMs) {
-                    · Tiempo real medido: {{ fmtDecimal(realMs / 1000, 1) }} s
-                  }
-                </div>
-                @if (store.sessionReport(); as rep) {
-                  <div class="small mb-0">{{ rep.text }}</div>
-                }
 
                 <!-- Discord (v0.1.2): estado del webhook y envío manual del reporte -->
                 <div class="d-flex flex-wrap align-items-center gap-2 mt-2" aria-live="polite">
@@ -858,7 +883,16 @@
       @if (s.site.kind === 'venue' && store.comparison(); as cmp) {
         <section class="pulso-card p-3 mt-3" aria-label="Tarjeta de ahorro estimado">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-            <h2 class="h6 fw-bold mb-0">Ahorro en la sede</h2>
+            <div class="d-flex align-items-center gap-2">
+              <img
+                class="savings-seal sello-clip-simple"
+                src="assets/brand/sello-simple.svg"
+                alt=""
+                width="38"
+                height="38"
+              />
+              <h2 class="h6 fw-bold mb-0 savings-title">Ahorro en la sede</h2>
+            </div>
             <span class="badge-pulso-secondary">Estimación simulada</span>
           </div>
           <p class="fs-5 fw-bold mb-2">
@@ -880,54 +914,77 @@
       <div class="pulso-card p-4 text-center">Cargando Pulso Energético…</div>
     } @else {
       <!-- Login screen when unauthenticated in real mode -->
-      <div class="pulso-card p-4 mx-auto" style="max-width: 460px;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h1 class="h4 fw-bold mb-0">Pulso Energético</h1>
-          <span class="badge-sim">Datos simulados</span>
+      <section class="login-hero" aria-label="Acceso a Pulso Energético">
+        <div class="login-hero-grid">
+          <div class="login-seal-wrap">
+            <img
+              class="login-seal sello-clip-completo"
+              src="assets/brand/sello-completo.svg"
+              alt="Sello Cartel Latino de Pulso Energético · Ecuador por Chile · ODS 7"
+              width="330"
+              height="330"
+            />
+          </div>
+
+          <div class="login-copy">
+            <div class="login-kicker">
+              <span class="login-kicker-line" aria-hidden="true"></span>
+              <span>HACKATÓN ECUADOR <em class="login-kicker-x">×</em> CHILE</span>
+            </div>
+            <h1 class="login-title">Pulso <span>Energético</span></h1>
+            <p class="login-subtitle">La energía de tu sede, a la vista.</p>
+            <div class="login-ods-row">
+              <span class="login-diamond" aria-hidden="true"></span>
+              <span>ODS 7 · ENERGÍA ASEQUIBLE Y NO CONTAMINANTE</span>
+              <span class="badge-sim badge-sim-login">Datos simulados</span>
+            </div>
+          </div>
+
+          <div class="login-form-card">
+            @if (store.errorMessage(); as err) {
+              <div class="band-warn p-2 small fw-semibold mb-3" role="alert">{{ err }}</div>
+            }
+
+            <form class="d-flex flex-column gap-3" (ngSubmit)="onLoginSubmit()">
+              <div>
+                <label for="login-user-main" class="form-label small fw-bold mb-1">Usuario</label>
+                <input
+                  id="login-user-main"
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="loginUsername"
+                  name="username"
+                  placeholder="operador_cuenca / observador"
+                  required
+                />
+              </div>
+              <div>
+                <label for="login-pass-main" class="form-label small fw-bold mb-1">Contraseña</label>
+                <input
+                  id="login-pass-main"
+                  type="password"
+                  class="form-control"
+                  [(ngModel)]="loginPassword"
+                  name="password"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-pulso-primary w-100">
+                Iniciar sesión
+              </button>
+              @if (isLocalDemoHost) {
+                <button
+                  type="button"
+                  class="btn btn-pulso-outline w-100"
+                  (click)="loginAsDemoOperator()"
+                >
+                  Entrar como operador demo
+                </button>
+              }
+            </form>
+          </div>
         </div>
-
-        @if (store.errorMessage(); as err) {
-          <div class="band-warn p-2 small fw-semibold mb-3" role="alert">{{ err }}</div>
-        }
-
-        <form class="d-flex flex-column gap-3" (ngSubmit)="onLoginSubmit()">
-          <div>
-            <label for="login-user-main" class="form-label small fw-bold mb-1">Usuario</label>
-            <input
-              id="login-user-main"
-              type="text"
-              class="form-control"
-              [(ngModel)]="loginUsername"
-              name="username"
-              placeholder="operador_cuenca / observador"
-              required
-            />
-          </div>
-          <div>
-            <label for="login-pass-main" class="form-label small fw-bold mb-1">Contraseña</label>
-            <input
-              id="login-pass-main"
-              type="password"
-              class="form-control"
-              [(ngModel)]="loginPassword"
-              name="password"
-              required
-            />
-          </div>
-          <button type="submit" class="btn btn-pulso-primary w-100">
-            Iniciar sesión
-          </button>
-          @if (isLocalDemoHost) {
-            <button
-              type="button"
-              class="btn btn-pulso-outline w-100"
-              (click)="loginAsDemoOperator()"
-            >
-              Entrar como operador demo
-            </button>
-          }
-        </form>
-      </div>
+      </section>
     }
   </div>
 </div>
