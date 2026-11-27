@@ -87,11 +87,17 @@ def report_json(session):
     on_seconds = max(session.zone_states.values_list('on_seconds', flat=True), default=0)
     alert = session.alerts.order_by('t_s').first()
     status = discord_status(session)
-    energy = f'{session.energy_wh:.4f}'.replace('.', ',')
-    threshold = f'{session.threshold_wh:.4f}'.replace('.', ',')
+    venue = session.site.kind == 'venue'
+    threshold_wh = alert.threshold_wh if alert else session.threshold_wh
+
+    def qty(wh):
+        return (f'{wh / 1000:.3f}' if venue else f'{wh:.4f}').replace('.', ',')
+    unit, unit_words = ('kWh', 'kilovatios hora') if venue else ('Wh', 'vatios hora')
+    energy, threshold = qty(session.energy_wh), qty(threshold_wh)
+    effective = f'{on_seconds / 60:.0f} minutos simulados' if venue else f'{on_seconds:g} segundos'
     text = (f'Resumen del ensayo en {session.site.name}, {session.site.locality.name}. Datos simulados. '
-            f'Energía acumulada: {energy} vatios hora. Umbral: {threshold} vatios hora. '
-            f'Consumo efectivo: {on_seconds:g} segundos. ' +
+            f'Energía acumulada: {energy} {unit_words}. Umbral: {threshold} {unit_words}. '
+            f'Consumo efectivo: {effective}. ' +
             ('Se emitió una alerta de umbral. ' if alert else 'No se alcanzó el umbral. ') +
             f'Potencia actual: {power:g} vatios' + (', consumo detenido.' if power == 0 else '.'))
     return {'session_id': str(session.id), 'site': session.site.name, 'locality': session.site.locality.name,
@@ -101,4 +107,4 @@ def report_json(session):
         'discord': {k: status[k] for k in ['configured', 'last_sent_at', 'alert_sent', 'report_sent']},
         'text': text, 'discord_preview': {'label': status['label'], 'sent': status['sent'],
             'content': f'⚡ Pulso Energético · {session.site.name} ({session.site.locality.name}) — '
-                       f'Acumulado {energy} Wh, umbral {threshold} Wh en {on_seconds:g} s de consumo. [Datos simulados]'}}
+                       f'Acumulado {energy} {unit}, umbral {threshold} {unit}, consumo efectivo {effective}. [Datos simulados]'}}
