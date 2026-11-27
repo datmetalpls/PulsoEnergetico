@@ -58,6 +58,7 @@ class Session(models.Model):
     telemetry_origin = models.DateTimeField(null=True)
     closed_at = models.DateTimeField(null=True)
     backup_key = models.CharField(max_length=50, unique=True, null=True)
+    discord_report_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['site'], condition=Q(status='running'), name='one_running_session')]
@@ -110,6 +111,7 @@ class Alert(models.Model):
     threshold_wh = models.FloatField()
     acknowledged_at = models.DateTimeField(null=True)
     channel = models.CharField(max_length=20, default='browser')
+    discord_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['session', 'kind'], name='one_threshold_alert')]

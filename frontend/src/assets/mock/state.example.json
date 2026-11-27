@@ -71,6 +71,14 @@
     }
   ],
   "alerts": [],
+  "discord": {
+    "configured": false,
+    "last_sent_at": null,
+    "alert_sent": false,
+    "report_sent": false,
+    "sent": false,
+    "label": "Simulación local"
+  },
   "gaps": [],
   "series": {
     "carga-5v": [

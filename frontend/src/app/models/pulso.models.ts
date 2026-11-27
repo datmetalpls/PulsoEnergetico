@@ -91,6 +91,18 @@ export interface AlertItem {
   channel_label: string;
   message: string;
   acknowledged: boolean;
+  /** v0.1.2 (aditivo): fecha de envío a Discord, o null. */
+  discord_sent_at?: string | null;
+}
+
+/** v0.1.2 (aditivo): estado del webhook de Discord; nunca incluye la URL. */
+export interface DiscordStatus {
+  configured: boolean;
+  last_sent_at: string | null;
+  alert_sent?: boolean;
+  report_sent?: boolean;
+  sent?: boolean;
+  label?: string;
 }
 
 export interface GapItem {
@@ -129,6 +141,7 @@ export interface StateResponse {
   gaps: GapItem[];
   series: Record<string, SeriesPoint[]>;
   context_card: ContextCard | null;
+  discord?: DiscordStatus;
 }
 
 export interface ReportResponse {
@@ -146,6 +159,7 @@ export interface ReportResponse {
     alert_t_s: number | null;
   };
   text: string;
+  discord?: DiscordStatus;
   discord_preview: {
     label: string;
     sent: boolean;

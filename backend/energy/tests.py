@@ -372,3 +372,179 @@ class DemoTests(TestCase):
             self.assertEqual(recovered.status_code, 200)
             after_reset = anon.post('/api/auth/login', bad, content_type='application/json', REMOTE_ADDR='10.0.0.1')
             self.assertEqual(after_reset.status_code, 403)
+
+
+FAKE_WEBHOOK = 'https://discord.invalid/api/webhooks/000/fake-token-for-tests'
+
+
+class FakeResponse:
+    status = 204
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+@patch.dict(os.environ, {'DISCORD_WEBHOOK_URL_TEST': FAKE_WEBHOOK})
+class DiscordTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command('seed_demo', verbosity=0)
+
+    def setUp(self):
+        cache.clear()
+        self.client.force_login(get_user_model().objects.get(username='operador_cuenca'))
+        self.site = Site.objects.get(slug='cuenca-banco')
+        self.session = Session.objects.get(site=self.site, status='running')
+        self.base = f'/api/sessions/{self.session.id}'
+
+    def post(self, action, body=None, expected=200):
+        response = self.client.post(f'{self.base}/{action}', json.dumps(body or {}), content_type='application/json')
+        self.assertEqual(response.status_code, expected, response.content[:500])
+        self.assertNotIn('discord.invalid', response.content.decode())
+        return response.json()
+
+    def reach_threshold(self):
+        self.post('zones/carga-5v', {'on': True, 'current_a': .4})
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.post('advance', {'seconds': 40})
+
+    def payload_of(self, mocked, call=0):
+        request = mocked.call_args_list[call].args[0]
+        self.assertEqual(mocked.call_args_list[call].kwargs['timeout'], 5)
+        return json.loads(request.data)
+
+    @patch('energy.discord.urllib.request.urlopen', return_value=FakeResponse())
+    def test_alert_sent_once_with_units(self, urlopen):
+        self.reach_threshold()
+        self.assertEqual(urlopen.call_count, 1)
+        body = self.payload_of(urlopen)
+        self.assertEqual(body['username'], 'Pulso Energético')
+        embed = body['embeds'][0]
+        values = {f['name']: f['value'] for f in embed['fields']}
+        self.assertTrue(values['Energía acumulada'].endswith(' Wh'))
+        self.assertEqual(values['Umbral'], '0,0200 Wh')
+        self.assertEqual(values['Hora del escenario'], '08:00:36')
+        self.assertEqual(embed['footer']['text'], 'Datos simulados · Prototipo hackatón Ecuador × Chile')
+        self.assertIsNotNone(Alert.objects.get(session=self.session).discord_sent_at)
+        self.assertEqual(AuditEvent.objects.get(session=self.session, action='discord.alert').payload,
+                         {'ok': True, 'http_status': 204})
+        with self.captureOnCommitCallbacks(execute=True):
+            self.post('zones/carga-5v', {'on': False})
+            self.post('zones/carga-5v', {'on': True})
+            self.post('advance', {'seconds': 30})
+        self.assertEqual(urlopen.call_count, 1)
+        from .services import send_alert
+        self.assertFalse(send_alert(Alert.objects.get(session=self.session).id, '08:00:00'))
+        self.assertEqual(urlopen.call_count, 1)
+        state = self.client.get('/api/sites/cuenca-banco/state').json()
+        self.assertEqual(state['discord']['label'], 'Enviado a Discord')
+        self.assertTrue(state['discord']['configured'])
+        self.assertIsNotNone(state['discord']['last_sent_at'])
+        report = self.client.get(f'{self.base}/report').json()
+        self.assertEqual(report['discord_preview'], {**report['discord_preview'], 'label': 'Enviado a Discord', 'sent': True})
+
+    @patch('energy.discord.urllib.request.urlopen', return_value=FakeResponse())
+    def test_venue_alert_uses_kwh(self, urlopen):
+        site = Site.objects.get(slug='cuenca-sede')
+        session = Session.objects.get(site=site, status='running')
+        session.threshold_wh = 1
+        session.save()
+        self.client.post(f'/api/sessions/{session.id}/zones/salon-principal', json.dumps({'on': True}),
+                         content_type='application/json')
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(f'/api/sessions/{session.id}/advance', json.dumps({'seconds': 600}),
+                                        content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        values = {f['name']: f['value'] for f in self.payload_of(urlopen)['embeds'][0]['fields']}
+        self.assertTrue(values['Umbral'].endswith(' kWh'))
+
+    @patch('energy.discord.urllib.request.urlopen')
+    def test_without_webhook_nothing_sent(self, urlopen):
+        with patch.dict(os.environ, {'DISCORD_WEBHOOK_URL_TEST': ''}):
+            self.reach_threshold()
+            urlopen.assert_not_called()
+            state = self.client.get('/api/sites/cuenca-banco/state').json()
+            self.assertEqual(state['discord'], {**state['discord'], 'configured': False, 'last_sent_at': None,
+                                                'label': 'Simulación local', 'sent': False})
+            report = self.client.get(f'{self.base}/report').json()
+            self.assertEqual(report['discord_preview']['label'], 'Simulación local')
+            self.post('discord/report', expected=409)
+        self.assertIsNone(Alert.objects.get(session=self.session).discord_sent_at)
+
+    def test_configured_label_before_sending(self):
+        state = self.client.get('/api/sites/cuenca-banco/state').json()
+        self.assertEqual(state['discord']['label'], 'Discord configurado')
+        self.assertNotIn('discord.invalid', json.dumps(state))
+
+    @patch('energy.discord.urllib.request.urlopen', side_effect=TimeoutError())
+    def test_discord_failure_does_not_break_request(self, urlopen):
+        with self.assertLogs('energy.discord', 'WARNING') as logs:
+            result = self.reach_threshold()
+        self.assertTrue(result['session']['alert_fired'])
+        self.assertEqual(urlopen.call_count, 1)
+        self.assertNotIn('discord.invalid', '\n'.join(logs.output))
+        self.assertIsNone(Alert.objects.get(session=self.session).discord_sent_at)
+        self.assertEqual(self.client.get('/api/sites/cuenca-banco/state').json()['discord']['label'],
+                         'Discord configurado')
+
+    def test_http_error_logs_only_status(self):
+        import urllib.error
+        error = urllib.error.HTTPError(FAKE_WEBHOOK, 500, 'boom', {}, None)
+        with patch('energy.discord.urllib.request.urlopen', side_effect=error), \
+                self.assertLogs('energy.discord', 'WARNING') as logs:
+            self.reach_threshold()
+        self.assertIn('HTTP 500', '\n'.join(logs.output))
+        self.assertNotIn('discord.invalid', '\n'.join(logs.output))
+
+    @patch('energy.discord.urllib.request.urlopen', return_value=FakeResponse())
+    def test_report_requires_operator_and_csrf(self, urlopen):
+        observer = Client()
+        observer.force_login(get_user_model().objects.get(username='observador'))
+        self.assertEqual(observer.post(f'{self.base}/discord/report').status_code, 403)
+        self.assertEqual(Client().post(f'{self.base}/discord/report').status_code, 403)
+        strict = Client(enforce_csrf_checks=True)
+        strict.force_login(get_user_model().objects.get(username='operador_cuenca'))
+        self.assertEqual(strict.post(f'{self.base}/discord/report').status_code, 403)
+        urlopen.assert_not_called()
+        strict.get('/api/auth/csrf')
+        token = strict.cookies['csrftoken'].value
+        response = strict.post(f'{self.base}/discord/report', HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        self.assertNotIn('discord.invalid', response.content.decode())
+        self.assertEqual(urlopen.call_count, 1)
+        embed = self.payload_of(urlopen)['embeds'][0]
+        self.assertIn('Resumen del ensayo', embed['description'])
+        self.assertTrue(response.json()['discord']['report_sent'])
+        self.assertTrue(AuditEvent.objects.filter(session=self.session, action='discord.report').exists())
+        self.assertEqual(self.client.get(f'{self.base}/discord/report').status_code, 405)
+
+    @patch('energy.discord.urllib.request.urlopen', return_value=FakeResponse())
+    def test_report_rate_limit_30s(self, urlopen):
+        self.post('discord/report')
+        response = self.client.post(f'{self.base}/discord/report')
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.json(), {'error': 'rate_limited'})
+        self.assertTrue(1 <= int(response['Retry-After']) <= 30)
+        self.assertEqual(urlopen.call_count, 1)
+        with patch('energy.views.time.time', return_value=__import__('time').time() + 31):
+            cache.delete(f'discord_report:{self.session.id}')  # la entrada caduca a los 30 s
+            self.post('discord/report')
+        self.assertEqual(urlopen.call_count, 2)
+
+    def test_report_discord_429_and_failure(self):
+        import urllib.error
+        error = urllib.error.HTTPError(FAKE_WEBHOOK, 429, 'slow down', {'Retry-After': '7.2'}, None)
+        with patch('energy.discord.urllib.request.urlopen', side_effect=error) as urlopen:
+            response = self.client.post(f'{self.base}/discord/report')
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response['Retry-After'], '8')
+        self.assertEqual(urlopen.call_count, 1)
+        cache.clear()
+        with patch('energy.discord.urllib.request.urlopen', side_effect=OSError()):
+            response = self.client.post(f'{self.base}/discord/report')
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.json(), {'error': 'discord_unavailable'})
+        self.assertNotIn('discord.invalid', response.content.decode())

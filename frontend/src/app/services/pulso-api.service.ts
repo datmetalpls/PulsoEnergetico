@@ -99,6 +99,10 @@ export class PulsoApiService {
     return this.http.get<ReportResponse>(`/api/sessions/${sessionId}/report`);
   }
 
+  sendDiscordReport(sessionId: string): Observable<ReportResponse> {
+    return this.http.post<ReportResponse>(`/api/sessions/${sessionId}/discord/report`, {});
+  }
+
   getComparison(siteSlug: string): Observable<ComparisonResponse> {
     return this.http.get<ComparisonResponse>(
       `/api/sites/${siteSlug}/comparison?duration_s=21600&meeting_end_s=10800`

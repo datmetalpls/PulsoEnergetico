@@ -3,11 +3,45 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 from .engine import integrate
+from . import discord
 from .models import Session, ZoneState, Reading, Gap, Alert, AuditEvent
 
 
 def audit(user, session, action, payload=None):
     AuditEvent.objects.create(user=user, session=session, action=action, payload=payload or {})
+
+
+def scenario_clock(offset_s):
+    seconds = (8 * 3600 + int(offset_s)) % 86400
+    return f'{seconds // 3600:02}:{seconds % 3600 // 60:02}:{seconds % 60:02}'
+
+
+def fire_alert(session, t_s, channel, offset_s=None):
+    alert, created = Alert.objects.get_or_create(session=session, kind='threshold', defaults={
+        't_s': t_s, 'energy_wh': session.energy_wh, 'threshold_wh': session.threshold_wh, 'channel': channel})
+    session.alert_fired = True
+    if created and discord.configured():
+        if offset_s is None:
+            offset_s = session.scenario_offset_s + max(0, math.ceil(t_s) - session.elapsed_s)
+        clock = scenario_clock(offset_s)
+        # Solo tras confirmar la transacción y fuera de la petición: Discord nunca provoca un 500.
+        transaction.on_commit(lambda: discord.run_async(lambda: send_alert(alert.id, clock)))
+    return alert
+
+
+def send_alert(alert_id, clock):
+    try:
+        alert = Alert.objects.select_related('session__site__locality').get(id=alert_id)
+        if alert.discord_sent_at is not None:
+            return False
+        result = discord.send(discord.alert_payload(alert, clock))
+        if result.ok:
+            Alert.objects.filter(id=alert_id, discord_sent_at__isnull=True).update(discord_sent_at=timezone.now())
+        audit(None, alert.session, 'discord.alert', {'ok': result.ok, 'http_status': result.status})
+        return result.ok
+    except Exception as exc:
+        discord.logger.warning('Envío de alerta a Discord falló (%s)', type(exc).__name__)
+        return False
 
 
 def new_session(site, threshold=None):
@@ -40,10 +74,7 @@ def ingest(session, zone, reading_id, t_s, voltage_v, current_a, source='simulat
         state.save()
         session.energy_wh = sum(session.zone_states.values_list('energy_wh', flat=True))
         if session.energy_wh >= session.threshold_wh - 1e-9 and not session.alert_fired:
-            Alert.objects.get_or_create(session=session, kind='threshold', defaults={
-                't_s': t_s, 'energy_wh': session.energy_wh, 'threshold_wh': session.threshold_wh,
-                'channel': 'wokwi_buzzer' if source == 'wokwi_import' else 'browser'})
-            session.alert_fired = True
+            fire_alert(session, t_s, 'wokwi_buzzer' if source == 'wokwi_import' else 'browser')
         session.save()
     Reading.objects.create(reading_id=reading_id, session=session, zone=zone, t_s=t_s,
         instant=instant or session.started_at + timedelta(seconds=t_s), voltage_v=voltage_v,
@@ -100,9 +131,7 @@ def advance(session, seconds):
                 state.last_t_s, state.power_w, state.gap_pending = t_s, power, False
                 session.energy_wh = sum(s.energy_wh for s in states)
                 if session.energy_wh >= session.threshold_wh - 1e-9 and not session.alert_fired:
-                    Alert.objects.get_or_create(session=session, kind='threshold', defaults={
-                        't_s': t_s, 'energy_wh': session.energy_wh, 'threshold_wh': session.threshold_wh})
-                    session.alert_fired = True
+                    fire_alert(session, t_s, 'browser', session.scenario_offset_s + (t_s - start))
                 readings.append(Reading(reading_id=f'{session.id}:{zone.slug}:{t_s}', session=session,
                     zone=zone, t_s=t_s, instant=session.started_at + timedelta(seconds=t_s),
                     voltage_v=zone.nominal_voltage_v, current_a=power / zone.nominal_voltage_v,

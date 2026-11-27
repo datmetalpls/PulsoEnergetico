@@ -12,6 +12,7 @@ from django.http import JsonResponse, FileResponse, Http404
 from django.middleware.csrf import get_token
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from . import discord
 from .models import Locality, Site, Session, ZoneState, Reading, Alert
 from .serializers import state_json, report_json, role, operable
 from .services import audit, new_session, catch_up, advance, immediate, next_band, ingest, comparison
@@ -345,6 +346,47 @@ def session_endpoint(request, session_id, action, data, zone_slug=None, alert_id
     audit(request.user, session, action, {'source': data.get('source'), 'count': len(data['readings'])}
           if action == 'readings' else data)
     return JsonResponse(state_json(session, request.user), status=status)
+
+
+DISCORD_REPORT_WINDOW_S = 30
+
+
+def discord_report(request, session_id):
+    """POST /api/sessions/{id}/discord/report: envía el reporte a Discord (solo operador, CSRF)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method_not_allowed'}, status=405)
+    try:
+        with transaction.atomic():
+            session = Session.objects.select_for_update().select_related('site__locality').get(id=session_id)
+            require_operator(request, session.site)
+            catch_up(session)
+            report = report_json(session)
+    except Session.DoesNotExist:
+        return JsonResponse({'error': 'not_found'}, status=404)
+    except APIError as exc:
+        return JsonResponse({'error': exc.error}, status=exc.status)
+    if not discord.configured():
+        return JsonResponse({'error': 'discord_not_configured'}, status=409)
+    key, now = f'discord_report:{session.id}', time.time()
+    if not cache.add(key, now, timeout=DISCORD_REPORT_WINDOW_S):
+        retry = max(1, math.ceil(DISCORD_REPORT_WINDOW_S - (now - float(cache.get(key, now)))))
+        response = JsonResponse({'error': 'rate_limited'}, status=429)
+        response['Retry-After'] = str(retry)
+        return response
+    # El envío ocurre fuera de la transacción para no retener el bloqueo de la sesión.
+    result = discord.send(discord.report_payload(session, report))
+    with transaction.atomic():
+        if result.ok:
+            Session.objects.filter(id=session.id).update(discord_report_sent_at=timezone.now())
+        audit(request.user, session, 'discord.report', {'ok': result.ok, 'http_status': result.status})
+    if result.status == 429:
+        response = JsonResponse({'error': 'rate_limited'}, status=429)
+        response['Retry-After'] = str(result.retry_after or DISCORD_REPORT_WINDOW_S)
+        return response
+    if not result.ok:
+        return JsonResponse({'error': 'discord_unavailable'}, status=502)
+    session.refresh_from_db()
+    return JsonResponse(report_json(session))
 
 
 def spa(request, path=''):

@@ -94,9 +94,10 @@ umbral alcanzado ⇔ energy_wh ≥ threshold_wh − 1e-9  → crear Alert una so
 | POST | `/api/sessions/{id}/readings` | operador | lote `telemetry.example.json` (fuente `wokwi_import`/`device`) |
 | POST | `/api/sessions/{id}/alerts/{alert}/ack` | operador | — |
 | GET | `/api/sessions/{id}/report` | observador | ver `report.example.json` |
+| POST | `/api/sessions/{id}/discord/report` | operador del sitio (CSRF) | (v0.1.2) envía el reporte al webhook de Discord; responde el reporte. `409 discord_not_configured`, `429 rate_limited` + `Retry-After` (1 envío/30 s por sesión), `502 discord_unavailable` |
 | GET | `/api/sites/{site}/comparison` | observador | solo venue (§7) |
 
-Errores: `429 {"error":"rate_limited"}` + `Retry-After` en login tras 5 fallos en 60 s por IP (v0.1.1); `400 {"error":"validation","fields":{...}}`, `403 {"error":"forbidden"}`, `409 {"error":"session_closed"}`. Las escrituras responden con el `state` completo actualizado, igual que GET state.
+Errores: `429 {"error":"rate_limited"}` + `Retry-After` en login tras 5 fallos en 60 s por IP (v0.1.1) y en el reporte a Discord (v0.1.2); `400 {"error":"validation","fields":{...}}`, `403 {"error":"forbidden"}`, `409 {"error":"session_closed"}`. Las escrituras responden con el `state` completo actualizado, igual que GET state.
 
 Polling: la UI pide `GET state` cada 1 s mientras la pestaña está visible. `series` trae como máximo los últimos 600 puntos por zona.
 

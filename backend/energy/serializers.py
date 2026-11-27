@@ -1,4 +1,5 @@
 from django.utils import timezone
+from . import discord
 
 
 def operable(user, site):
@@ -7,6 +8,19 @@ def operable(user, site):
 
 def role(user):
     return 'operator' if user.is_authenticated and user.operable_sites.exists() else 'observer'
+
+
+def discord_status(session):
+    # Nunca incluye la URL del webhook: solo si existe y cuándo se envió.
+    alert_sent = session.alerts.filter(discord_sent_at__isnull=False).order_by('-discord_sent_at').first()
+    times = [t for t in [alert_sent.discord_sent_at if alert_sent else None, session.discord_report_sent_at] if t]
+    last = max(times) if times else None
+    is_configured = discord.configured()
+    sent = alert_sent is not None or session.discord_report_sent_at is not None
+    label = 'Enviado a Discord' if sent else ('Discord configurado' if is_configured else 'Simulación local')
+    return {'configured': is_configured, 'last_sent_at': last.isoformat() if last else None,
+            'alert_sent': alert_sent is not None, 'report_sent': session.discord_report_sent_at is not None,
+            'sent': sent, 'label': label}
 
 
 def state_json(session, user):
@@ -32,7 +46,8 @@ def state_json(session, user):
         'threshold_wh': a.threshold_wh, 'channel': a.channel,
         'channel_label': 'Aviso del navegador (imita el buzzer)' if a.channel == 'browser' else 'Buzzer físico en Wokwi',
         'message': f'Se alcanzó el umbral de {a.threshold_wh:.4f} Wh'.replace('.', ','),
-        'acknowledged': a.acknowledged_at is not None} for a in session.alerts.order_by('id')]
+        'acknowledged': a.acknowledged_at is not None,
+        'discord_sent_at': a.discord_sent_at.isoformat() if a.discord_sent_at else None} for a in session.alerts.order_by('id')]
     zones = []
     for s in states:
         z = s.zone
@@ -58,7 +73,7 @@ def state_json(session, user):
             'remaining_wh': remaining, 'total_power_w': power, 'time_to_threshold_s': remaining * 3600 / power if power else None,
             'status_label': 'Presupuesto alcanzado' if session.alert_fired else ('Consumiendo' if power else 'Consumo detenido'),
             'alert_fired': session.alert_fired},
-        'zones': zones, 'alerts': alerts,
+        'zones': zones, 'alerts': alerts, 'discord': discord_status(session),
         'gaps': [{'zone': g.zone.slug, 'from_t_s': g.from_t_s, 'to_t_s': g.to_t_s,
                   'duration_s': g.to_t_s - g.from_t_s, 'label': 'Sin datos: conexión interrumpida'}
                  for g in session.gaps.select_related('zone').order_by('id')],
@@ -71,6 +86,7 @@ def report_json(session):
     power = sum(session.zone_states.values_list('power_w', flat=True)) if session.status == 'running' else 0
     on_seconds = max(session.zone_states.values_list('on_seconds', flat=True), default=0)
     alert = session.alerts.order_by('t_s').first()
+    status = discord_status(session)
     energy = f'{session.energy_wh:.4f}'.replace('.', ',')
     threshold = f'{session.threshold_wh:.4f}'.replace('.', ',')
     text = (f'Resumen del ensayo en {session.site.name}, {session.site.locality.name}. Datos simulados. '
@@ -82,6 +98,7 @@ def report_json(session):
         'data_label': 'Datos simulados', 'values': {'elapsed_s': session.elapsed_s, 'on_seconds': on_seconds,
             'energy_wh': session.energy_wh, 'threshold_wh': session.threshold_wh, 'power_w': power,
             'alert_fired': session.alert_fired, 'alert_t_s': alert.t_s if alert else None},
-        'text': text, 'discord_preview': {'label': 'Simulación local', 'sent': False,
+        'discord': {k: status[k] for k in ['configured', 'last_sent_at', 'alert_sent', 'report_sent']},
+        'text': text, 'discord_preview': {'label': status['label'], 'sent': status['sent'],
             'content': f'⚡ Pulso Energético · {session.site.name} ({session.site.locality.name}) — '
                        f'Acumulado {energy} Wh, umbral {threshold} Wh en {on_seconds:g} s de consumo. [Datos simulados]'}}

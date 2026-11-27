@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/sites/<slug:slug>/<str:action>', views.site_endpoint),
     path('api/sessions/<uuid:session_id>/zones/<slug:zone_slug>', views.session_endpoint, {'action': 'zones'}),
     path('api/sessions/<uuid:session_id>/alerts/<int:alert_id>/ack', views.session_endpoint, {'action': 'ack'}),
+    path('api/sessions/<uuid:session_id>/discord/report', views.discord_report),
     path('api/sessions/<uuid:session_id>/<str:action>', views.session_endpoint),
     re_path(r'^api/(?P<path>.*)$', views.api_missing),
     re_path(r'^(?P<path>.*)$', views.spa),

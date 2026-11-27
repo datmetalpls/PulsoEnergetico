@@ -86,6 +86,15 @@ export class PulsoStoreService {
   readonly presentationStartedAtMs = signal<number | null>(null);
   readonly presentationAlertElapsedMs = signal<number | null>(null);
   readonly presentationBusy = signal(false);
+  readonly discordBusy = signal(false);
+  readonly discordFeedback = signal<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  /** Etiqueta visible: «Enviado a Discord», «Discord configurado» o «Simulación local». */
+  readonly discordLabel = computed(() => {
+    const d = this.state()?.discord;
+    if (!d) return 'Simulación local';
+    return d.label ?? (d.configured ? 'Discord configurado' : 'Simulación local');
+  });
+  readonly discordConfigured = computed(() => !!this.state()?.discord?.configured);
   readonly presentationRestorePromptSite = signal<string | null>(
     this.readSessionString(STORAGE_RESTORE_BUDGET_KEY)
   );
@@ -937,6 +946,41 @@ export class PulsoStoreService {
       return;
     }
     this.runAction(this.api.ackAlert(s.session.id, alertId));
+  }
+
+  sendDiscordReport(): void {
+    const s = this.state();
+    if (!s || this.discordBusy() || this.isMockMode() || !s.discord?.configured) return;
+    this.discordBusy.set(true);
+    this.discordFeedback.set(null);
+    const sessionId = s.session.id;
+    this.api.sendDiscordReport(sessionId).subscribe({
+      next: (rep) => {
+        this.discordBusy.set(false);
+        this.discordFeedback.set({ kind: 'ok', text: 'Reporte enviado a Discord.' });
+        const current = this.state();
+        if (current && current.session.id === sessionId && rep.discord) {
+          this.state.set({
+            ...current,
+            discord: { ...current.discord, ...rep.discord, sent: true, label: rep.discord_preview.label },
+          });
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        this.discordBusy.set(false);
+        let text = 'No se pudo enviar el reporte a Discord. Inténtalo más tarde.';
+        if (err?.status === 429) {
+          const header = err.headers?.get('Retry-After');
+          const seconds = header ? Math.max(1, Number.parseInt(header, 10) || 30) : 30;
+          text = `Espera ${seconds} s antes de volver a enviar el reporte a Discord.`;
+        } else if (err?.status === 409) {
+          text = 'Discord no está configurado en este servidor (simulación local).';
+        } else if (err?.status === 403) {
+          text = 'Solo el operador del recinto puede enviar el reporte a Discord.';
+        }
+        this.discordFeedback.set({ kind: 'error', text });
+      },
+    });
   }
 
   // --- Guided Presentation Mode ---

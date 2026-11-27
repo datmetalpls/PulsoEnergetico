@@ -476,6 +476,30 @@
                 @if (store.sessionReport(); as rep) {
                   <div class="small mb-0">{{ rep.text }}</div>
                 }
+
+                <!-- Discord (v0.1.2): estado del webhook y envío manual del reporte -->
+                <div class="d-flex flex-wrap align-items-center gap-2 mt-2" aria-live="polite">
+                  <span class="badge-pulso-secondary">Discord · {{ store.discordLabel() }}</span>
+                  @if (store.canOperate()) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-pulso-outline"
+                      [disabled]="!store.discordConfigured() || store.discordBusy()"
+                      [attr.title]="store.discordConfigured() ? null : 'Discord no está configurado (simulación local)'"
+                      (click)="store.sendDiscordReport()"
+                    >
+                      {{ store.discordBusy() ? 'Enviando…' : 'Enviar reporte a Discord' }}
+                    </button>
+                  }
+                  @if (store.discordFeedback(); as fb) {
+                    <span
+                      class="small fw-semibold"
+                      [class.band-warn]="fb.kind === 'error'"
+                      [class.p-1]="fb.kind === 'error'"
+                      [attr.role]="fb.kind === 'error' ? 'alert' : 'status'"
+                    >{{ fb.text }}</span>
+                  }
+                </div>
               </div>
 
               @if (store.comparison(); as cmp) {
@@ -709,6 +733,30 @@
                   <div class="pulso-surface-alt p-2 small pulso-muted" role="status">
                     Sin alertas activas · El aviso de umbral aparecerá aquí aunque el audio esté silenciado.
                   </div>
+                }
+              </div>
+
+              <!-- Discord (v0.1.2): estado del webhook y envío manual del reporte -->
+              <div class="d-flex flex-wrap align-items-center gap-2 mt-2" aria-live="polite">
+                <span class="badge-pulso-secondary">Discord · {{ store.discordLabel() }}</span>
+                @if (store.canOperate()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-pulso-outline"
+                    [disabled]="!store.discordConfigured() || store.discordBusy()"
+                    [attr.title]="store.discordConfigured() ? null : 'Discord no está configurado (simulación local)'"
+                    (click)="store.sendDiscordReport()"
+                  >
+                    {{ store.discordBusy() ? 'Enviando…' : 'Enviar reporte a Discord' }}
+                  </button>
+                }
+                @if (store.discordFeedback(); as fb) {
+                  <span
+                    class="small fw-semibold"
+                    [class.band-warn]="fb.kind === 'error'"
+                    [class.p-1]="fb.kind === 'error'"
+                    [attr.role]="fb.kind === 'error' ? 'alert' : 'status'"
+                  >{{ fb.text }}</span>
                 }
               </div>
 

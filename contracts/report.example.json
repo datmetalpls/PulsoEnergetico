@@ -12,6 +12,12 @@
     "alert_fired": true,
     "alert_t_s": 46
   },
+  "discord": {
+    "configured": false,
+    "last_sent_at": null,
+    "alert_sent": false,
+    "report_sent": false
+  },
   "text": "Resumen del ensayo en Banco de pruebas 5 V, Cuenca. Datos simulados. Energía acumulada: 0,0200 vatios hora, igual al umbral de 0,0200 vatios hora. Consumo efectivo: 36 segundos. Se emitió una alerta de umbral. Potencia actual: 0 vatios, consumo detenido.",
   "discord_preview": {
     "label": "Simulación local",
