@@ -383,27 +383,27 @@ export class MockDataService {
       duration_s: 21600,
       runs: [
         {
-          key: 'always_on',
+          key: 'A',
           label: 'Sala encendida',
-          energy_wh: 1320,
+          energy_wh: 1440,
           zones: [
             { zone: 'salon-principal', energy_wh: 960, on_seconds: 21600 },
-            { zone: 'sala-reuniones', energy_wh: 360, on_seconds: 21600 },
+            { zone: 'sala-reuniones', energy_wh: 480, on_seconds: 21600 },
           ],
         },
         {
-          key: 'turned_off',
+          key: 'B',
           label: 'Sala apagada al terminar la reunión',
-          energy_wh: 1140,
+          energy_wh: 1200,
           zones: [
             { zone: 'salon-principal', energy_wh: 960, on_seconds: 21600 },
-            { zone: 'sala-reuniones', energy_wh: 180, on_seconds: 10800 },
+            { zone: 'sala-reuniones', energy_wh: 240, on_seconds: 10800 },
           ],
         },
       ],
-      difference_wh: 180,
+      difference_wh: 240,
       salon_on_seconds: 21600,
-      note: `Datos de demostración (${siteSlug})`,
+      note: 'Datos de demostración',
     };
   }
 }

@@ -40,6 +40,8 @@ Visita `http://localhost:4200/` (sin `?mock=1`). La aplicación:
 
 - Solicita `GET /api/auth/csrf` al iniciar y configura `withXsrfConfiguration({ cookieName: 'csrftoken', headerName: 'X-CSRFToken' })`.
 - Consulta `GET /api/sites/{site}/state` cada `1 s` mientras la pestaña está visible (`document.visibilityState === 'visible'`).
-- Oculta los controles de operación cuando el usuario tiene rol `observer`.
+- Oculta los controles de operación cuando el usuario tiene rol `observer` o no opera el recinto activo.
+- En el login muestra el botón **«Entrar como operador demo»** únicamente cuando `window.location.hostname` es `localhost` o `127.0.0.1` (rellena `operador_demo` con la contraseña demo local de `.env.example`); en el despliegue EC2 (u otro dominio público) este botón **no aparece**.
+- El encabezado mantiene solo la marca, localidad › recinto, `DATOS SIMULADOS`, reloj/franja/escala, el botón principal del paso siguiente y el menú hamburguesa (`☰`) con foco atrapado y cierre con `Esc`.
 - Emite un único beep WebAudio de `0,8 s` al detectar por primera vez una alerta de umbral si el sonido fue habilitado (registrado en `sessionStorage` por `alert.id`).
-- Permite escuchar el reporte con `speechSynthesis` (`es-CL`, `es-EC` o cualquier voz `es-*`) y muestra la vista previa de Discord con etiqueta «Simulación local».
+- Incluye el **Modo presentación** guiado en las sedes (`kind === 'venue'`) con presupuesto de demostración `0,10 kWh`, transiciones Día → Tarde → Noche y tarjeta de ahorro estimada vía `GET /api/sites/{site}/comparison`.
