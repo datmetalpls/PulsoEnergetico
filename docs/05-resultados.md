@@ -41,6 +41,13 @@ Antigravity informa que hizo su propia verificación en vivo del recorrido de la
 | Segundo arranque sin reconstruir ni descargar | ✔ informado por Codex: `docker compose down` y luego `up -d --no-build --pull never` conservan el UUID, 0,010 Wh y 18 s en `puente-alto-banco` |
 | `seed_demo` idempotente | ✔ informado por Codex: dos ejecuciones dejan los mismos conteos `[2, 4, 6, 6, 9, 3]` |
 
+## 3b. Corrección Puente Alto (2026-11-27)
+Problema: al entrar como `operador_cuenca` y cambiar a Puente Alto, los controles desaparecían sin aviso, porque ese usuario no tiene permiso sobre Puente Alto. Correcciones:
+- Aviso visible «👁 Solo lectura… Entra como operador_puente u operador_demo».
+- Nuevo usuario `operador_demo` / `Demo-2026`, que opera Cuenca y Puente Alto.
+
+Verificado en el navegador (aviso visible y controles en ambas localidades con `operador_demo`), Django 13 OK y aceptación de la API 19/19. Con `operador_puente`, el banco de Puente Alto da 2 W y suma Wh; la sede marca 240 W.
+
 ## 4. Pendiente o no ejecutado (⚠)
 - ⚠ **Arranque con la red físicamente desconectada:** no se apagó el Wi-Fi. `--no-build --pull never` demuestra que no hay descargas, pero conviene repetirlo con el Wi-Fi apagado antes de presentar. Nunca usar `docker compose down -v`, porque borra los datos.
 - ⚠ **AWS EC2:** el plan y el script existen (`docs/06`, `scripts/deploy-ec2.*`), pero **no se ejecutaron** en el Learner Lab.

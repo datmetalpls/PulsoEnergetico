@@ -114,4 +114,4 @@ Aviso sonoro: `alert.channel = "browser"` («Aviso del navegador: imita el buzze
 
 ## 9. Seguridad
 
-Usuarios semilla con contraseñas tomadas del entorno (`.env`, nunca del repositorio): `operador_cuenca` (sitios de Cuenca), `operador_puente` (sitios de Puente Alto) y `observador` (solo lectura). La UI oculta los controles sin permiso, aunque la autorización real la decide Django. Angular usa `withXsrfConfiguration({cookieName:'csrftoken', headerName:'X-CSRFToken'})`.
+Usuarios semilla con contraseñas tomadas del entorno (`.env`, nunca del repositorio): `operador_cuenca` (sitios de Cuenca), `operador_puente` (sitios de Puente Alto) y `observador` (solo lectura). **Cambio 2026-11-27 (aprobado por Claude):** se añadió `operador_demo` (`DEMO_OPERATOR_PASSWORD`), que opera las dos localidades para poder presentar sin cambiar de usuario. Cuando el usuario no puede operar un recinto, la interfaz muestra un aviso de «Solo lectura». La UI oculta los controles sin permiso, aunque la autorización real la decide Django. Angular usa `withXsrfConfiguration({cookieName:'csrftoken', headerName:'X-CSRFToken'})`.

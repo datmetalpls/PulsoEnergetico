@@ -150,6 +150,12 @@
                   {{ s.session.connected ? 'Simular corte' : 'Reconectar' }}
                 </button>
               </div>
+            } @else if (store.auth().authenticated) {
+              <div class="alert alert-warning py-1 px-2 mb-0 small" role="status">
+                👁 Solo lectura: tu usuario no opera este recinto.
+                Entra como <strong>{{ s.locality.slug === 'puente-alto' ? 'operador_puente' : 'operador_cuenca' }}</strong>
+                u <strong>operador_demo</strong> para encender, apagar o iniciar ensayos.
+              </div>
             }
           </div>
         </div>

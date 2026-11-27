@@ -23,6 +23,14 @@ class Command(BaseCommand):
                 user.set_password(password)
                 user.save()
             users[username] = user
+        # Operador de presentación: opera las dos localidades (opcional; se omite si no hay contraseña).
+        demo_password = os.getenv('DEMO_OPERATOR_PASSWORD')
+        if demo_password:
+            demo_user, created = get_user_model().objects.get_or_create(username='operador_demo')
+            if created:
+                demo_user.set_password(demo_password)
+                demo_user.save()
+            users['operador_demo'] = demo_user
         for slug, name, country, tz, voltage, venue, operator in [
             ('cuenca', 'Cuenca', 'Ecuador', 'America/Guayaquil', 120,
              'Centro Comunitario Río Tomebamba (ficticio)', 'operador_cuenca'),
@@ -36,6 +44,8 @@ class Command(BaseCommand):
                     'fictitious': not bench, 'budget_kwh_day': None if bench else .6,
                     'sample_interval_s': 1 if bench else 60, 'default_speed': 1 if bench else 60})
                 site.operators.add(users[operator])
+                if 'operador_demo' in users:
+                    site.operators.add(users['operador_demo'])
                 zones = [('carga-5v', 'Carga simulada 5 V', 'dc_load', False, 5, 4, .8)] if bench else [
                     ('salon-principal', 'Salón principal', 'light', False, voltage, 160, None),
                     ('sala-reuniones', 'Sala de reuniones', 'light', True, voltage, 80, None)]
