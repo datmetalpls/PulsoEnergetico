@@ -33,10 +33,12 @@ Regla: no se abre un nivel hasta cerrar el anterior con su prueba.
 | # | Tarea | Resp. | Criterio | Estado |
 |---|---|---|---|---|
 | R1 | Demo local sin Internet (capa 1) | Claude | arranque sin red verificado | ☐ |
-| R2 | Plan y script de EC2 única, más apagado (capa 2) | Claude-docs → Claude ejecuta si hay tiempo | `scripts/deploy-ec2.*` y `docs/06` | ◐ |
+| R2 | Plan y script de EC2 única, más apagado (capa 2) | Claude-docs → Claude ejecuta si hay tiempo | `scripts/deploy-ec2.*` y `docs/06` | ⚠ escrito; `bash -n`, shellcheck y `verify` OK en local; **sin ejecutar en AWS** |
 | R3 | Video y capturas guardados fuera del laboratorio (capa 3) | Claude + equipo | archivo en el portátil y en el drive del equipo | ☐ |
-| R4 | Registro de riesgos | Claude-docs | `docs/07-riesgos.md` | ◐ |
-| R5 | Guion de 90 s y ensayo | Claude-docs (guion) + Claude (ensayo) | `docs/08-guion-90s.md` y tiempo medido | ◐ |
+| R4 | Registro de riesgos | Claude-docs | `docs/07-riesgos.md` | ☑ (documento con 15 riesgos) |
+| R5 | Guion de 90 s y ensayo | Claude-docs (guion) + Claude (ensayo) | `docs/08-guion-90s.md` y tiempo medido | ◐ guion escrito; ensayo pendiente |
+
+**Decisión (Claude, 2026-11-27):** la sede usa por diseño una escala de tiempo fija de ×60 (1 s real = 1 min simulado, con muestreo de 60 s) para que el presupuesto en kWh se alcance durante la demo. Esa escala forma parte del modelo de la sede y no cuenta como el «avance acelerado» recortado. Se recorta el selector ×60/×300 de la interfaz. La prueba de aceptación del jurado (2 W, 0,020 Wh) se hace en el banco a ×1 y en tiempo real.
 
 ## ✂ Recortado: siguiente etapa (no se implementa ni se presenta hoy)
 Reporte de voz, vista previa de Discord, importación de Wokwi, hardware físico (Pico/Zero W), roles complejos, avance acelerado (×60/×300), análisis ODS 13, CI de GitHub Actions y despliegue gestionado en AWS. El código ya escrito de estas funciones se conserva, pero queda **fuera del recorrido de la demo** y sin verificar; donde se vea en la interfaz, se oculta o se etiqueta «Siguiente etapa».
