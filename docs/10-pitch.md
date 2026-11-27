@@ -48,7 +48,7 @@ Láminas 1 a 10 en orden. Cada lámina tiene sus tiempos en las **notas del orad
 - [ ] Presupuesto restaurado a 0,60 kWh desde el ensayo anterior.
 - [ ] Zoom del navegador en 100–110 % y modo oscuro del sistema irrelevante, porque la app tiene sus temas.
 - [ ] Notificaciones del sistema silenciadas. Discord abierto en el teléfono para mostrar el mensaje, si conviene.
-- [ ] **Video de respaldo** en el escritorio y en un pendrive.
+- [ ] **Video de respaldo** (`docs/video/Pulso_Energetico_demo_respaldo_1080p.mp4`, 89 s, sin audio) en el escritorio, en un pendrive y en el drive del equipo.
 - [ ] Cronómetro visible para quien presenta.
 
 ## 4. Plan B (si algo falla en vivo)
@@ -72,6 +72,8 @@ Láminas 1 a 10 en orden. Cada lámina tiene sus tiempos en las **notas del orad
 8. **¿Por qué Ecuador y Chile?** Somos un equipo de ambos países, y cada localidad tiene su propia tensión (120 V y 220 V), su zona horaria y su presupuesto.
 
 ## 6. Apoyo visual
+
+- **Video de respaldo (89 s, 1080p, sin audio):** `docs/video/Pulso_Energetico_demo_respaldo_1080p.mp4`. Recorre portada → ingreso → Día, Tarde y Noche → alerta → reporte a Discord → ahorro → refresco → mensajes en el canal de Discord → cierre. Se puede narrar encima con el guion de la sección 1.
 
 - **Presentación:** el enlace de arriba (10 láminas, 16:9, sello latino, Fraunces y DM Sans).
 - **Portada para video o redes:** `design/brand/sello-latino/vector/aplicacion-16x9.png`.
