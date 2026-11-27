@@ -1,0 +1,6 @@
+# Mantener LF en scripts que corren en Linux/contenedores (evita errores con clones en Windows)
+*.sh text eol=lf
+backend/entrypoint.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+.env.example text eol=lf
