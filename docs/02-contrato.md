@@ -12,6 +12,7 @@ Responsable: Claude (líder técnico). Cambios al contrato solo mediante Claude;
 |---|---|---|
 | `voltage_v` | V | Tensión de la lectura |
 | `current_a` | A | Corriente de la lectura |
+| `setpoint_current_a` | A | (v0.1.1, aditivo) Posición de la perilla del banco aunque la carga esté apagada; `null` en luces |
 | `power_w` | W | **Potencia instantánea** = `voltage_v × current_a`, calculada en backend |
 | `energy_wh` | Wh | **Energía acumulada** desde el inicio de la sesión (o de la zona) |
 | `threshold_wh` | Wh | Umbral / presupuesto de la sesión |
@@ -95,7 +96,7 @@ umbral alcanzado ⇔ energy_wh ≥ threshold_wh − 1e-9  → crear Alert una so
 | GET | `/api/sessions/{id}/report` | observador | ver `report.example.json` |
 | GET | `/api/sites/{site}/comparison` | observador | solo venue (§7) |
 
-Errores: `400 {"error":"validation","fields":{...}}`, `403 {"error":"forbidden"}`, `409 {"error":"session_closed"}`. Las escrituras responden con el `state` completo actualizado, igual que GET state.
+Errores: `429 {"error":"rate_limited"}` + `Retry-After` en login tras 5 fallos en 60 s por IP (v0.1.1); `400 {"error":"validation","fields":{...}}`, `403 {"error":"forbidden"}`, `409 {"error":"session_closed"}`. Las escrituras responden con el `state` completo actualizado, igual que GET state.
 
 Polling: la UI pide `GET state` cada 1 s mientras la pestaña está visible. `series` trae como máximo los últimos 600 puntos por zona.
 
