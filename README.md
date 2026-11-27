@@ -33,7 +33,7 @@ La app puede publicar la alerta de umbral y el reporte en un canal de Discord me
 
 ## Probar
 ```sh
-docker compose exec -T web python manage.py test                                  # 13 pruebas Django
+docker compose exec -T web python manage.py test                                  # 31 pruebas Django (2 de despliegue se omiten en la imagen)
 python3 -I scripts/acceptance.py .env.example contracts/telemetry.example.json   # 19/19 PASS esperado
 ```
 
@@ -47,4 +47,4 @@ python3 -I scripts/acceptance.py .env.example contracts/telemetry.example.json  
 | `scripts/` | Prueba de aceptación, despliegue en EC2 y apagado |
 | `audits/` | Informes de auditoría (seguridad, legibilidad, QA y arquitectura) |
 
-Siguiente etapa (no incluida en la demo): voz, Discord, Wokwi, hardware físico y despliegue en AWS.
+Siguiente etapa (no incluida en la demo): reporte de voz, importación de Wokwi y hardware físico. AWS EC2: plan y script listos (`docs/06`, `scripts/deploy-ec2.sh`), con prueba pendiente.
