@@ -47,16 +47,16 @@
 <section class="cover">
   <div>
     <div class="band"></div>
-    <div style="height:28mm"></div>
+    <div style="height:8mm"></div>
     <span class="tag">DATOS SIMULADOS · PROTOTIPO</span>
     <h1 style="margin-top:5mm">Pulso Energético</h1>
     <div class="sub">Informe de estado para el equipo · Hackatón Chile–Ecuador</div>
-    <p style="font-size:12pt; max-width:150mm">Una app web que le dice al encargado de un recinto comunitario <b>qué está encendido</b>, <b>cuánta energía lleva consumida</b> y <b>cuánto le falta para su límite</b>. La demo local está lista, probada y auditada. Faltan tres tareas antes de presentar.</p>
+    <img src="../evidencia/sello-lamina-16x9.png" alt="Lámina de identidad" style="width:100%; border-radius:2mm; margin:2mm 0 6mm"><p style="font-size:12pt; max-width:150mm">Una app web que le dice al encargado de un recinto comunitario <b>qué está encendido</b>, <b>cuánta energía lleva consumida</b> y <b>cuánto le falta para su límite</b>. La demo local está lista, probada y auditada. Faltan tres tareas antes de presentar.</p>
   </div>
   <table class="meta">
     <tr><td>Fecha</td><td>27 de noviembre de 2026</td></tr>
     <tr><td>Repositorio</td><td>github.com/datmetalpls/PulsoEnergetico (público)</td></tr>
-    <tr><td>Versión revisada</td><td>commit <code>1f1dbd8</code> en <code>main</code></td></tr>
+    <tr><td>Versión revisada</td><td>rama <code>main</code>, 27-11-2026 (identidad sello latino + Discord)</td></tr>
     <tr><td>ODS</td><td>ODS 7 (principal). ODS 13 como hipótesis por validar</td></tr>
     <tr><td>Equipo de agentes</td><td>Claude (líder e integrador), Codex, Antigravity (Hydrogen y Neon) y OpenCode con DeepSeek</td></tr>
   </table>
@@ -66,7 +66,7 @@
 <p>El recorrido obligatorio funciona de punta a punta en la máquina local con Docker. Pasa las pruebas automáticas, la prueba de aceptación del jurado y una revisión en navegador. Cuatro auditorías no encontraron fallos críticos, y los hallazgos altos ya están corregidos. Para presentar faltan <b>tres tareas</b>: probar sin Wi-Fi, grabar el video de respaldo y ensayar los 90 s.</p>
 <div class="kpis">
   <div class="kpi"><b>19/19</b><span>comprobaciones de aceptación contra la API</span></div>
-  <div class="kpi"><b>21 + 2</b><span>pruebas Django en verde (imagen + host)</span></div>
+  <div class="kpi"><b>31</b><span>pruebas Django en verde (2 de despliegue en host)</span></div>
   <div class="kpi"><b>0</b><span>hallazgos críticos en 4 auditorías</span></div>
   <div class="kpi"><b>35 s</b><span>hasta la alerta en el modo presentación</span></div>
 </div>
@@ -83,6 +83,7 @@
   <tr><td>Ahorro</td><td>Tarjeta: «Apagar la sala vacía al terminar la reunión ahorra 0,240 kWh por jornada» (estimación simulada).</td></tr>
   <tr><td>Modo presentación</td><td>Recorre Día → Tarde → Noche con textos grandes y un botón «Siguiente paso». Usa un presupuesto de demostración de 0,10 kWh.</td></tr>
   <tr><td>Estado persistente</td><td>Refrescar, abrir otra pestaña o reiniciar Docker muestra el mismo ensayo.</td></tr>
+  <tr><td>Discord</td><td>Con un webhook configurado, publica <b>una</b> alerta por ensayo y permite enviar el reporte (1 cada 30 s). El pie indica el origen (local o EC2). Sin webhook muestra «Simulación local».</td></tr>
   <tr><td>Permisos</td><td>Operadores por localidad, un operador de demo para ambas y un observador de solo lectura. El servidor valida cada acción.</td></tr>
 </table>
 
@@ -108,9 +109,12 @@
   <tr><td><code>operador_puente</code></td><td><code>Puente-demo-2026</code></td><td>Operar Puente Alto</td></tr>
   <tr><td><code>observador</code></td><td><code>Observador-demo-2026</code></td><td>Solo mirar</td></tr>
 </table>
+<div class="note"><b>Discord:</b> pon <code>DISCORD_WEBHOOK_URL</code> solo en <code>.env</code> (nunca en el repositorio). Pasos para local y EC2 en <code>docs/09-discord.md</code>.</div>
 <div class="note">Estas contraseñas ya son públicas en el repositorio y sirven solo en localhost. El script de la EC2 <b>se niega a desplegar</b> si alguna contraseña falta o coincide con la pública.</div>
 
 
+<h2>Identidad visual</h2>
+<p>La identidad oficial es el <b>Sello Cartel Latino</b>: un anillo «PULSO ENERGÉTICO · ECUADOR × CHILE · ODS 7», chakanas en los cuatro ejes, flora simétrica y, al centro, el rayo-pulso dorado. Paleta: petróleo <code>#06323B</code>, crema <code>#FFF1D9</code>, dorado <code>#FFC04C</code> y verdes ODS 7. Tipografía: Fraunces (titulares) y DM Sans (interfaz), ambas locales y con licencia OFL. Tiene tres niveles: completo (portada, video), simple (128–256 px) y mini (favicon, 32–64 px). Archivos en <code>design/brand/sello-latino/</code>. Los logos v1, v2 y v3 quedan como exploraciones archivadas.</p>
 <h2>4. Verificación</h2>
 <p>Todas estas pruebas las ejecutó el integrador sobre el commit indicado. No son solo lo que informaron los agentes.</p>
 <table>
@@ -150,6 +154,7 @@
   <li>Los sliders no envían una petición por cada movimiento.</li>
   <li>Avisos visibles para 403, 409 y 429.</li>
   <li>Accesibilidad AA y README.</li>
+  <li>La alerta muestra el umbral con el que se disparó, en la unidad del sitio.</li>
 </ul>
 <p>Además se aplicó la <b>revisión de Alex</b>: tarjeta de ahorro, dos columnas, modo presentación, escala ×60 visible, guía 1-2-3, entrada rápida y menú ☰. Los informes completos están en <code>audits/</code>.</p>
 
@@ -159,35 +164,31 @@
   <tr><td>1</td><td>Arrancar con el <b>Wi-Fi apagado</b> (<code>docker compose up -d</code>, sin <code>--build</code>) y hacer el recorrido</td><td>La sala puede no tener Internet</td><td>Por asignar</td></tr>
   <tr><td>2</td><td>Grabar el <b>video de respaldo</b> del modo presentación y guardarlo fuera del laboratorio</td><td>Último recurso si todo falla</td><td>Por asignar</td></tr>
   <tr><td>3</td><td><b>Ensayar los 90 s</b> con cronómetro (<code>docs/08-guion-90s.md</code>)</td><td>El modo presentación tarda ~35 s</td><td>Por asignar</td></tr>
-  <tr><td>4</td><td>(Opcional) Ejecutar <code>scripts/deploy-ec2.sh</code> en el Learner Lab; nunca usar Reset</td><td>Respaldo y evidencia en la nube</td><td>Por asignar</td></tr>
+  <tr><td>4</td><td><b>Prueba en AWS (28-11):</b> <code>scripts/deploy-ec2.sh</code> en el Learner Lab, con <code>.env</code> propio y webhook; nunca usar Reset. Si no aguanta, se presenta local.</td><td>Respaldo y evidencia en la nube</td><td>Por asignar</td></tr>
 </table>
 
 <h3>Limitaciones conocidas</h3>
 <ul>
   <li>Todos los datos son simulados. Los beneficios de ahorro y climáticos son <b>hipótesis por validar</b>.</li>
-  <li>Quedan para la siguiente etapa: reporte de voz, Discord, importación de Wokwi, hardware (Pico y Zero W) y AWS en producción.</li>
+  <li>Quedan para la siguiente etapa: reporte de voz, importación de Wokwi y hardware (Pico y Zero W). Discord ya está integrado; AWS EC2 está listo para probar.</li>
   <li>En la EC2 la app iría por HTTP, sin cifrado: el puerto solo debe abrirse durante la demo.</li>
   <li>Los avisos de npm en Angular, ninguno crítico, se resolverán con una actualización después de la demo.</li>
-  <li>Detalle menor: en la sede, el texto de la alerta muestra «100,0000 Wh» en lugar de «0,100 kWh».</li>
-  <li>Siguiente ronda de interfaz (Alex 9–13): íconos SVG, logo, barra fija en móvil, costo ilustrativo y fuente local.</li>
+  <li>Siguiente ronda de interfaz: íconos SVG, barra fija en móvil y costo ilustrativo.</li>
+  <li>El webhook de Discord usado en desarrollo debe <b>regenerarse</b> después de la hackatón.</li>
 </ul>
 
 <h3>Preguntas para el equipo</h3>
 <ul>
-  <li>¿Hay un logo aprobado de la hackatón para el encabezado?</li>
   <li>¿Quién presenta y quién maneja el equipo durante los 90 s?</li>
   <li>¿Usamos la EC2 o nos quedamos solo con la demo local y el video?</li>
 </ul>
 
 
 <h2 class="page">7. Capturas (27-11-2026)</h2>
-<div style="display:grid; grid-template-columns: 1.05fr 1fr; gap:5mm; align-items:start">
-  <figure style="margin:0"><img style="max-height:225mm" src="../evidencia/revision-alex-presentacion-alerta.png" alt="Modo presentación, paso Noche"><figcaption>Modo presentación, paso Noche: alerta a los ~35 s reales, resumen del ensayo y tarjeta de ahorro.</figcaption></figure>
-  <div>
-    <figure style="margin-top:0"><img src="../evidencia/revision-alex-menu-1440.png" alt="Menú hamburguesa"><figcaption>Menú ☰: las acciones secundarias salen del encabezado.</figcaption></figure>
-    <figure><img src="../evidencia/navegador-final-1440.png" alt="Banco con alerta"><figcaption>Banco de 5 V: 0,020 Wh con alerta; el gráfico de potencia muestra el tramo apagado.</figcaption></figure>
-    <figure><img style="max-height:80mm; width:auto" src="../evidencia/revision-alex-390.png" alt="Vista móvil"><figcaption>Vista móvil a 390 px.</figcaption></figure>
-  </div>
+<figure><img src="../evidencia/sello-login-1440.png" alt="Login con el sello"><figcaption>Inicio de sesión con la identidad sello latino y la entrada rápida de demo (solo en localhost).</figcaption></figure>
+<div class="two">
+  <figure><img src="../evidencia/sello-sede-1440.png" alt="Sede Cuenca"><figcaption>Sede de Cuenca en la franja Noche: el salón encendido, la sala apagada, la alerta y el estado de Discord.</figcaption></figure>
+  <figure><img src="../evidencia/revision-alex-menu-1440.png" alt="Menú"><figcaption>Menú ☰ con las acciones secundarias (versión previa a la nueva paleta).</figcaption></figure>
 </div>
 </body>
 </html>
