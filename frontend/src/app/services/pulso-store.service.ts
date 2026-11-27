@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { catchError, of } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import {
   AuthMeResponse,
   BandKey,
@@ -14,6 +14,8 @@ import { MockDataService } from './mock-data.service';
 import { PulsoApiService } from './pulso-api.service';
 
 const DEFAULT_BENCH_CURRENT_A = 0.4;
+const SLIDER_DEBOUNCE_MS = 250;
+const ACTION_FEEDBACK_MS = 6000;
 
 @Injectable({ providedIn: 'root' })
 export class PulsoStoreService {
@@ -34,8 +36,7 @@ export class PulsoStoreService {
 
   /**
    * Presentation-only memory of the bench knob setpoint (A) per site+zone.
-   * Needed because backend serializes `current_a = power_w / voltage_v`,
-   * which drops to 0.0 A whenever `zone.on === false`.
+   * Fallback when backend does not provide `setpoint_current_a`.
    */
   readonly benchCurrentRemembered = signal<Record<string, number>>({});
 
@@ -52,8 +53,12 @@ export class PulsoStoreService {
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly actionFeedback = signal<string | null>(null);
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private feedbackTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly sliderTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly lastSentSliderValue = new Map<string, number>();
 
   readonly currentBand = computed<BandKey>(() => {
     return this.state()?.session.band ?? this.mockBand();
@@ -146,9 +151,71 @@ export class PulsoStoreService {
       clearInterval(this.pollTimer);
       this.pollTimer = null;
     }
+    if (this.feedbackTimer) {
+      clearTimeout(this.feedbackTimer);
+      this.feedbackTimer = null;
+    }
+    for (const timer of this.sliderTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.sliderTimers.clear();
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
+  }
+
+  dismissActionFeedback(): void {
+    if (this.feedbackTimer) {
+      clearTimeout(this.feedbackTimer);
+      this.feedbackTimer = null;
+    }
+    this.actionFeedback.set(null);
+  }
+
+  private showActionFeedback(message: string): void {
+    this.actionFeedback.set(message);
+    if (this.feedbackTimer) {
+      clearTimeout(this.feedbackTimer);
+    }
+    this.feedbackTimer = setTimeout(() => {
+      this.actionFeedback.set(null);
+      this.feedbackTimer = null;
+    }, ACTION_FEEDBACK_MS);
+  }
+
+  private formatActionError(err: HttpErrorResponse): string {
+    if (err?.status === 403) {
+      return 'Solo lectura: tu usuario no tiene permiso para operar este recinto.';
+    }
+    if (err?.status === 409 || err?.error?.error === 'session_closed') {
+      return 'El ensayo terminó; inicia uno nuevo.';
+    }
+    if (err?.status === 429 || err?.error?.error === 'rate_limited') {
+      const retryHeader = err.headers?.get('Retry-After');
+      const seconds = retryHeader ? Math.max(1, Number.parseInt(retryHeader, 10) || 60) : 60;
+      return `Demasiados intentos, espera ${seconds} s`;
+    }
+    return err?.error?.error || 'No se pudo completar la acción en el servidor.';
+  }
+
+  private runAction(obs$: Observable<StateResponse>): void {
+    obs$
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          this.showActionFeedback(this.formatActionError(err));
+          if (err?.status === 409 || err?.status === 403) {
+            this.fetchCurrentState();
+          }
+          return of(null);
+        })
+      )
+      .subscribe((next) => {
+        if (next) {
+          this.errorMessage.set(null);
+          this.dismissActionFeedback();
+          this.applyState(next);
+        }
+      });
   }
 
   private readonly onVisibilityChange = (): void => {
@@ -192,7 +259,7 @@ export class PulsoStoreService {
     this.api
       .getLocalities()
       .pipe(
-        catchError((err) => {
+        catchError((err: HttpErrorResponse) => {
           this.errorMessage.set(
             err?.status === 403
               ? 'Inicia sesión para acceder a las localidades.'
@@ -226,19 +293,41 @@ export class PulsoStoreService {
   private applyState(next: StateResponse): void {
     const remembered = this.benchCurrentRemembered();
     let updated: Record<string, number> | null = null;
-    for (const z of next.zones) {
-      if (z.kind === 'dc_load' && z.on && z.current_a > 0) {
-        const key = this.knobKey(next.site.slug, z.slug);
-        if (remembered[key] !== z.current_a) {
-          updated ??= { ...remembered };
-          updated[key] = z.current_a;
+
+    // Preserve active optimistic slider values while a debounced write is pending
+    const preservedZones = next.zones.map((z) => {
+      const hasPendingBench = this.sliderTimers.has(`bench:${z.slug}`);
+      const hasPendingDim = this.sliderTimers.has(`dim:${z.slug}`);
+      if (z.kind === 'dc_load' && !hasPendingBench) {
+        const val = z.setpoint_current_a ?? (z.on && z.current_a > 0 ? z.current_a : null);
+        if (val !== null) {
+          const key = this.knobKey(next.site.slug, z.slug);
+          if (remembered[key] !== val) {
+            updated ??= { ...remembered };
+            updated[key] = val;
+          }
         }
       }
-    }
+      if (hasPendingBench) {
+        const key = this.knobKey(next.site.slug, z.slug);
+        const pendingCurrent = remembered[key];
+        if (pendingCurrent !== undefined) {
+          return { ...z, setpoint_current_a: pendingCurrent };
+        }
+      }
+      if (hasPendingDim) {
+        const currentZone = this.state()?.zones.find((cur) => cur.slug === z.slug);
+        if (currentZone && currentZone.intensity_pct !== null) {
+          return { ...z, intensity_pct: currentZone.intensity_pct };
+        }
+      }
+      return z;
+    });
+
     if (updated) {
       this.benchCurrentRemembered.set(updated);
     }
-    this.state.set(next);
+    this.state.set({ ...next, zones: preservedZones });
   }
 
   getBenchKnobCurrent(zone: ZoneState): number {
@@ -260,10 +349,7 @@ export class PulsoStoreService {
     return Number(Math.min(DEFAULT_BENCH_CURRENT_A, maxA).toFixed(2));
   }
 
-  private computeMockStatusLabel(
-    s: StateResponse,
-    totalPower: number
-  ): string {
+  private computeMockStatusLabel(s: StateResponse, totalPower: number): string {
     if (s.session.alert_fired) return 'Presupuesto alcanzado';
     if (!s.session.connected) return 'Conexión interrumpida';
     if (s.session.status === 'idle') return 'Ensayo sin iniciar';
@@ -277,10 +363,8 @@ export class PulsoStoreService {
     this.api
       .getState(slug)
       .pipe(
-        catchError((err) => {
-          this.errorMessage.set(
-            err?.error?.error || 'Error al consultar el estado del backend.'
-          );
+        catchError((err: HttpErrorResponse) => {
+          this.errorMessage.set(this.formatActionError(err));
           return of(null);
         })
       )
@@ -302,6 +386,7 @@ export class PulsoStoreService {
 
   selectSite(siteSlug: string): void {
     this.selectedSiteSlug.set(siteSlug);
+    this.dismissActionFeedback();
     if (this.isMockMode()) {
       this.applyMockView();
     } else {
@@ -352,7 +437,7 @@ export class PulsoStoreService {
       .login(username, password)
       .pipe(
         catchError((err: HttpErrorResponse) => {
-          if (err?.status === 429) {
+          if (err?.status === 429 || err?.error?.error === 'rate_limited') {
             const retryHeader = err.headers?.get('Retry-After');
             const seconds = retryHeader ? Math.max(1, Number.parseInt(retryHeader, 10) || 60) : 60;
             this.errorMessage.set(`Demasiados intentos, espera ${seconds} s`);
@@ -365,6 +450,7 @@ export class PulsoStoreService {
       .subscribe((me) => {
         if (me) {
           this.errorMessage.set(null);
+          this.dismissActionFeedback();
           this.auth.set(me);
           this.loadLocalitiesAndState();
         }
@@ -384,16 +470,26 @@ export class PulsoStoreService {
       return;
     }
 
-    this.api.logout().subscribe(() => {
-      this.auth.set({
-        authenticated: false,
-        username: 'observador',
-        role: 'observer',
-        operable_sites: [],
+    this.api
+      .logout()
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          this.showActionFeedback(this.formatActionError(err));
+          return of(null);
+        })
+      )
+      .subscribe((res) => {
+        if (res === null) return;
+        this.auth.set({
+          authenticated: false,
+          username: 'observador',
+          role: 'observer',
+          operable_sites: [],
+        });
+        this.state.set(null);
+        this.dismissActionFeedback();
+        this.errorMessage.set('Sesión cerrada. Inicia sesión para continuar.');
       });
-      this.state.set(null);
-      this.errorMessage.set('Sesión cerrada. Inicia sesión para continuar.');
-    });
   }
 
   startSession(): void {
@@ -403,7 +499,7 @@ export class PulsoStoreService {
       this.setMockState('encendida');
       return;
     }
-    this.api.startSession(s.site.slug).subscribe((next) => this.applyState(next));
+    this.runAction(this.api.startSession(s.site.slug));
   }
 
   play(): void {
@@ -413,7 +509,7 @@ export class PulsoStoreService {
       this.state.set({ ...s, session: { ...s.session, playing: true } });
       return;
     }
-    this.api.play(s.session.id).subscribe((next) => this.applyState(next));
+    this.runAction(this.api.play(s.session.id));
   }
 
   pause(): void {
@@ -423,7 +519,7 @@ export class PulsoStoreService {
       this.state.set({ ...s, session: { ...s.session, playing: false } });
       return;
     }
-    this.api.pause(s.session.id).subscribe((next) => this.applyState(next));
+    this.runAction(this.api.pause(s.session.id));
   }
 
   nextBand(): void {
@@ -435,7 +531,7 @@ export class PulsoStoreService {
       this.setMockBand(order[nextIdx]);
       return;
     }
-    this.api.nextBand(s.session.id).subscribe((next) => this.applyState(next));
+    this.runAction(this.api.nextBand(s.session.id));
   }
 
   toggleZone(zoneSlug: string): void {
@@ -492,12 +588,39 @@ export class PulsoStoreService {
       return;
     }
 
-    this.api
-      .updateZone(s.session.id, zoneSlug, { on: nextOn })
-      .subscribe((next) => this.applyState(next));
+    this.runAction(this.api.updateZone(s.session.id, zoneSlug, { on: nextOn }));
   }
 
-  setBenchCurrent(zoneSlug: string, currentA: number): void {
+  private scheduleSliderCommit(
+    key: string,
+    value: number,
+    immediate: boolean,
+    sendFn: () => void
+  ): void {
+    const existing = this.sliderTimers.get(key);
+    if (existing) {
+      clearTimeout(existing);
+      this.sliderTimers.delete(key);
+    }
+
+    const commit = () => {
+      this.sliderTimers.delete(key);
+      if (this.lastSentSliderValue.get(key) === value) {
+        return;
+      }
+      this.lastSentSliderValue.set(key, value);
+      sendFn();
+    };
+
+    if (immediate) {
+      commit();
+    } else {
+      this.lastSentSliderValue.delete(key);
+      this.sliderTimers.set(key, setTimeout(commit, SLIDER_DEBOUNCE_MS));
+    }
+  }
+
+  setBenchCurrent(zoneSlug: string, currentA: number, immediate = false): void {
     const s = this.state();
     if (!s) return;
     this.benchCurrentRemembered.update((prev) => ({
@@ -505,76 +628,83 @@ export class PulsoStoreService {
       [this.knobKey(s.site.slug, zoneSlug)]: currentA,
     }));
 
-    if (this.isMockMode()) {
-      const nextZones = s.zones.map((z) => {
-        if (z.slug !== zoneSlug) return z;
-        const powerW = z.on ? Number((z.voltage_v * currentA).toFixed(2)) : 0;
-        const active = z.on && powerW > 0;
-        return {
-          ...z,
-          current_a: z.on ? currentA : 0,
-          setpoint_current_a: currentA,
-          power_w: powerW,
-          indicator: {
-            led: (active ? 'green' : 'off') as 'green' | 'off',
-            label: active ? 'Carga habilitada' : 'Carga deshabilitada',
-          },
-        };
-      });
-      const totalPower = nextZones.reduce((sum, z) => sum + z.power_w, 0);
-      this.applyState({
-        ...s,
-        zones: nextZones,
-        session: {
-          ...s.session,
-          total_power_w: totalPower,
-          time_to_threshold_s:
-            totalPower > 0 ? Math.round((s.session.remaining_wh * 3600) / totalPower) : null,
-          status_label: this.computeMockStatusLabel(s, totalPower),
+    const nextZones = s.zones.map((z) => {
+      if (z.slug !== zoneSlug) return z;
+      const powerW = z.on ? Number((z.voltage_v * currentA).toFixed(2)) : 0;
+      const active = z.on && powerW > 0;
+      return {
+        ...z,
+        current_a: z.on ? currentA : 0,
+        setpoint_current_a: currentA,
+        power_w: powerW,
+        indicator: {
+          led: (active ? 'green' : 'off') as 'green' | 'off',
+          label: active ? 'Carga habilitada' : 'Carga deshabilitada',
         },
-      });
+      };
+    });
+    const totalPower = nextZones.reduce((sum, z) => sum + z.power_w, 0);
+    this.state.set({
+      ...s,
+      zones: nextZones,
+      session: {
+        ...s.session,
+        total_power_w: totalPower,
+        time_to_threshold_s:
+          totalPower > 0 ? Math.round((s.session.remaining_wh * 3600) / totalPower) : null,
+        status_label: this.computeMockStatusLabel(s, totalPower),
+      },
+    });
+
+    if (this.isMockMode()) {
       return;
     }
-    this.api
-      .updateZone(s.session.id, zoneSlug, { current_a: currentA })
-      .subscribe((next) => this.applyState(next));
+
+    const sessionId = s.session.id;
+    this.scheduleSliderCommit(`bench:${zoneSlug}`, currentA, immediate, () => {
+      this.runAction(this.api.updateZone(sessionId, zoneSlug, { current_a: currentA }));
+    });
   }
 
-  setZoneIntensity(zoneSlug: string, intensityPct: number): void {
+  setZoneIntensity(zoneSlug: string, intensityPct: number, immediate = false): void {
     const s = this.state();
     if (!s) return;
-    if (this.isMockMode()) {
-      const nextZones = s.zones.map((z) => {
-        if (z.slug !== zoneSlug) return z;
-        const powerW = z.on ? Number(((80 * intensityPct) / 100).toFixed(2)) : 0;
-        const active = z.on && powerW > 0;
-        return {
-          ...z,
-          intensity_pct: intensityPct,
-          power_w: powerW,
-          indicator: {
-            led: (active ? 'green' : 'off') as 'green' | 'off',
-            label: active ? 'Encendida' : 'Apagada',
-          },
-        };
-      });
-      const totalPower = nextZones.reduce((sum, z) => sum + z.power_w, 0);
-      this.applyState({
-        ...s,
-        zones: nextZones,
-        session: {
-          ...s.session,
-          total_power_w: totalPower,
-          time_to_threshold_s:
-            totalPower > 0 ? Math.round((s.session.remaining_wh * 3600) / totalPower) : null,
-          status_label: this.computeMockStatusLabel(s, totalPower),
+
+    const nextZones = s.zones.map((z) => {
+      if (z.slug !== zoneSlug) return z;
+      const powerW = z.on ? Number(((80 * intensityPct) / 100).toFixed(2)) : 0;
+      const active = z.on && powerW > 0;
+      return {
+        ...z,
+        intensity_pct: intensityPct,
+        power_w: powerW,
+        indicator: {
+          led: (active ? 'green' : 'off') as 'green' | 'off',
+          label: active ? 'Encendida' : 'Apagada',
         },
-      });
+      };
+    });
+    const totalPower = nextZones.reduce((sum, z) => sum + z.power_w, 0);
+    this.state.set({
+      ...s,
+      zones: nextZones,
+      session: {
+        ...s.session,
+        total_power_w: totalPower,
+        time_to_threshold_s:
+          totalPower > 0 ? Math.round((s.session.remaining_wh * 3600) / totalPower) : null,
+        status_label: this.computeMockStatusLabel(s, totalPower),
+      },
+    });
+
+    if (this.isMockMode()) {
       return;
     }
-    this.api
-      .updateZone(s.session.id, zoneSlug, { intensity_pct: intensityPct })
-      .subscribe((next) => this.applyState(next));
+
+    const sessionId = s.session.id;
+    this.scheduleSliderCommit(`dim:${zoneSlug}`, intensityPct, immediate, () => {
+      this.runAction(this.api.updateZone(sessionId, zoneSlug, { intensity_pct: intensityPct }));
+    });
   }
 
   toggleConnection(): void {
@@ -585,9 +715,7 @@ export class PulsoStoreService {
       this.setMockState(nextConn ? 'encendida' : 'sin_conexion');
       return;
     }
-    this.api
-      .setConnection(s.session.id, nextConn)
-      .subscribe((next) => this.applyState(next));
+    this.runAction(this.api.setConnection(s.session.id, nextConn));
   }
 
   ackAlert(alertId: string): void {
@@ -602,6 +730,6 @@ export class PulsoStoreService {
       });
       return;
     }
-    this.api.ackAlert(s.session.id, alertId).subscribe((next) => this.applyState(next));
+    this.runAction(this.api.ackAlert(s.session.id, alertId));
   }
 }

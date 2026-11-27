@@ -76,14 +76,28 @@ export class AppComponent implements OnInit, OnDestroy {
   onBenchCurrentInput(zoneSlug: string, event: Event): void {
     const val = Number((event.target as HTMLInputElement).value);
     if (Number.isFinite(val)) {
-      this.store.setBenchCurrent(zoneSlug, val);
+      this.store.setBenchCurrent(zoneSlug, val, false);
+    }
+  }
+
+  onBenchCurrentChange(zoneSlug: string, event: Event): void {
+    const val = Number((event.target as HTMLInputElement).value);
+    if (Number.isFinite(val)) {
+      this.store.setBenchCurrent(zoneSlug, val, true);
     }
   }
 
   onIntensityInput(zoneSlug: string, event: Event): void {
     const val = Number((event.target as HTMLInputElement).value);
     if (Number.isFinite(val)) {
-      this.store.setZoneIntensity(zoneSlug, val);
+      this.store.setZoneIntensity(zoneSlug, val, false);
+    }
+  }
+
+  onIntensityChange(zoneSlug: string, event: Event): void {
+    const val = Number((event.target as HTMLInputElement).value);
+    if (Number.isFinite(val)) {
+      this.store.setZoneIntensity(zoneSlug, val, true);
     }
   }
 

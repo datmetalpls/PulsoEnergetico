@@ -205,6 +205,23 @@
         }
       </header>
 
+      @if (store.actionFeedback(); as feedback) {
+        <div
+          class="band-warn p-3 mb-3 d-flex justify-content-between align-items-center gap-2"
+          role="alert"
+        >
+          <span class="fw-semibold">{{ feedback }}</span>
+          <button
+            type="button"
+            class="btn btn-sm btn-pulso-outline"
+            aria-label="Cerrar aviso"
+            (click)="store.dismissActionFeedback()"
+          >
+            Cerrar
+          </button>
+        </div>
+      }
+
       @if (store.errorMessage(); as err) {
         <div class="band-warn p-3 mb-3" role="alert">
           {{ err }}
@@ -278,6 +295,7 @@
                       [attr.aria-valuetext]="benchKnobAriaText(zone)"
                       [attr.aria-describedby]="'knob-scale-' + zone.slug"
                       (input)="onBenchCurrentInput(zone.slug, $event)"
+                      (change)="onBenchCurrentChange(zone.slug, $event)"
                     />
                     <div
                       [id]="'knob-scale-' + zone.slug"
@@ -316,6 +334,7 @@
                       [attr.aria-valuetext]="intensityAriaText(zone)"
                       [attr.aria-describedby]="'dim-scale-' + zone.slug"
                       (input)="onIntensityInput(zone.slug, $event)"
+                      (change)="onIntensityChange(zone.slug, $event)"
                     />
                     <div
                       [id]="'dim-scale-' + zone.slug"
@@ -337,7 +356,7 @@
                   }
                   {{ fmtPower(zone.power_w) }}
                 </span>
-                <span>{{ fmtEnergy(zone.energy_wh, s.site.kind) }} · {{ zone.on_seconds }} s on</span>
+                <span>{{ fmtEnergy(zone.energy_wh, s.site.kind) }} · {{ zone.on_seconds }} s encendida</span>
               </div>
             </article>
           }
@@ -396,7 +415,13 @@
             <div aria-live="polite" aria-atomic="true">
               @if (!s.session.connected || s.gaps.length > 0) {
                 <div class="band-warn p-2 small fw-semibold mt-2" role="status">
-                  ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() || 10 }} s
+                  @if (store.totalGapSeconds() === 0) {
+                    ⚠ Conexión interrumpida · sin datos (en curso)
+                  } @else if (!s.session.connected) {
+                    ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s (en curso)
+                  } @else {
+                    ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s
+                  }
                 </div>
               }
             </div>
