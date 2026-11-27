@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from functools import wraps
 from django.conf import settings
+from django.core.exceptions import RequestDataTooBig
 from django.contrib.auth import authenticate, login, logout
 from django.core.cache import cache
 from django.db import transaction
@@ -26,9 +27,9 @@ def invalid(field, message='Valor inválido'):
 
 
 def number(value, low, high, field, integer=False):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         invalid(field)
-    if not low <= value <= high or (integer and int(value) != value):
+    if not low <= value <= high or not math.isfinite(value) or (integer and int(value) != value):
         invalid(field)
     return int(value) if integer else value
 
@@ -52,10 +53,13 @@ def endpoint(methods):
                 return JsonResponse({'error': 'method_not_allowed'}, status=405)
             try:
                 data = {}
-                if request.method != 'GET' and request.body:
+                if request.method != 'GET':
                     try:
-                        data = json.loads(request.body)
-                    except (ValueError, UnicodeError):
+                        body = request.body
+                        data = json.loads(body) if body else {}
+                    except RequestDataTooBig:
+                        invalid('body', 'El cuerpo supera el límite de 2 MiB')
+                    except (ValueError, UnicodeError, RecursionError):
                         invalid('body', 'JSON inválido')
                     if not isinstance(data, dict):
                         invalid('body')
@@ -219,7 +223,7 @@ def import_readings(session, data):
             invalid('readings')
         fields_only(row, ['reading_id', 'zone', 'instant', 'voltage_v', 'current_a', '_comment'])
         rid = row.get('reading_id')
-        if not isinstance(rid, str) or not 1 <= len(rid) <= 200:
+        if not isinstance(rid, str) or not 1 <= len(rid) <= 200 or '\x00' in rid:
             invalid('reading_id')
         try:
             zone = session.site.zones.get(slug=row.get('zone'))
@@ -239,8 +243,12 @@ def import_readings(session, data):
         if existing and (existing.session_id != session.id or existing.zone_id != zone.id):
             invalid('reading_id', 'Identificador perteneciente a otra sesión o zona')
         parsed.append((zone, rid, instant, voltage, current))
-    if session.telemetry_origin is None:
-        session.telemetry_origin = parsed[0][2]
+    origin = session.telemetry_origin or parsed[0][2]
+    # Both session clocks are PostgreSQL positive integers (up to 2**31 - 1).
+    max_t = session.elapsed_s + min(2**31 - 1 - session.elapsed_s, 2**31 - 1 - session.scenario_offset_s)
+    for _, _, instant, _, _ in parsed:
+        number((instant - origin).total_seconds(), -(2**31 - 1), max_t, 'instant')
+    session.telemetry_origin = origin
     outcomes = []
     for zone, rid, instant, voltage, current in parsed:
         t_s = (instant - session.telemetry_origin).total_seconds()

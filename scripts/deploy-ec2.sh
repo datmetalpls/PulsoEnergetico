@@ -29,7 +29,20 @@ compose() {
 }
 
 env_get() { # env_get ARCHIVO CLAVE → valor (o vacío)
-  [ -f "$1" ] && grep -E "^$2=" "$1" | tail -n1 | cut -d= -f2- || true
+  local value
+  value="$( { [ -f "$1" ] && grep -E "^$2=" "$1" | tail -n1 | cut -d= -f2-; } || true)"
+  value="$(printf '%s' "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  if [[ "$value" == \"* ]]; then
+    value="${value:1}"
+    value="${value%%\"*}"
+  elif [[ "$value" == \'* ]]; then
+    value="${value:1}"
+    value="${value%%\'*}"
+  else
+    value="${value%%[[:space:]]#*}"
+    value="$(printf '%s' "$value" | sed 's/[[:space:]]*$//')"
+  fi
+  printf '%s' "$value"
 }
 
 secret() { # secret CLAVE: como compose, .env tiene prioridad sobre .env.example
@@ -170,9 +183,15 @@ configure_env() {
   local envf="$APP_DIR/.env"
   [ -f "$envf" ] || die "Falta $envf. Copiarlo desde el portátil con scp (nunca subirlo al repo); ver deploy-ec2.md §1"
   chmod 600 "$envf"
-  grep -q 'replace-before-deployment' "$envf" && die "DJANGO_SECRET_KEY de .env sigue con el valor de ejemplo"
+  local key value example
+  for key in DJANGO_SECRET_KEY POSTGRES_PASSWORD DEMO_CUENCA_PASSWORD DEMO_PUENTE_PASSWORD DEMO_OBSERVER_PASSWORD DEMO_OPERATOR_PASSWORD; do
+    value="$(env_get "$envf" "$key")"
+    example="$(env_get "$APP_DIR/.env.example" "$key")"
+    [ -n "$value" ] || die "Falta $key en .env (no se permite heredar credenciales de .env.example)"
+    [ "$value" != "$example" ] || die "$key de .env sigue con el valor público de .env.example"
+  done
   local hosts
-  hosts="$(public_host | grep -v '^$' | paste -sd, -)"
+  hosts="$(public_host | grep -v '^$' | paste -sd, - || true)"
   [ -n "$hosts" ] || echo "AVISO: IMDS no respondió; ALLOWED_HOSTS queda solo local" >&2
   hosts="${hosts:+$hosts,}localhost,127.0.0.1,web"
   log "ALLOWED_HOSTS=$hosts · WEB_BIND=$WEB_BIND"

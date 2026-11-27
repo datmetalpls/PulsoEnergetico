@@ -3,6 +3,7 @@ import json
 import os
 from datetime import timedelta
 from pathlib import Path
+from time import perf_counter
 from unittest.mock import patch
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -172,11 +173,11 @@ class DemoTests(TestCase):
         self.assertEqual(result['salon_on_seconds'], 21600)
         self.assertEqual(result['runs'][0]['zones'][0]['on_seconds'], result['runs'][1]['zones'][0]['on_seconds'])
 
-    def test_catch_up_lock_idempotency_and_cap(self):
+    def test_catch_up_lock_idempotency_after_hidden_tab(self):
         self.post('zones/carga-5v', {'on': True})
         self.session.refresh_from_db()
         now = timezone.now()
-        self.session.playing, self.session.last_tick_wall = True, now - timedelta(seconds=130)
+        self.session.playing, self.session.last_tick_wall = True, now - timedelta(seconds=600)
         self.session.save()
         with patch('energy.services.timezone.now', return_value=now):
             with transaction.atomic():
@@ -185,10 +186,85 @@ class DemoTests(TestCase):
             with transaction.atomic():
                 again = Session.objects.select_for_update().get(id=self.session.id)
                 catch_up(again)
-        self.assertEqual(again.elapsed_s, 130)
-        self.assertAlmostEqual(again.energy_wh, 2 * 120 / 3600)
-        self.assertEqual(again.gaps.get().to_t_s - again.gaps.get().from_t_s, 10)
+        self.assertEqual(again.elapsed_s, 600)
+        self.assertAlmostEqual(again.energy_wh, 2 * 600 / 3600)
+        self.assertFalse(again.gaps.exists())
+        self.assertEqual(again.alerts.get().t_s, 36)
         self.assertEqual(again.readings.count(), session.readings.count())
+
+    def test_catch_up_keeps_backlog_after_one_hour(self):
+        self.post('zones/carga-5v', {'on': True})
+        self.session.refresh_from_db()
+        now = timezone.now()
+        self.session.playing, self.session.last_tick_wall = True, now - timedelta(seconds=3601)
+        self.session.save()
+        with patch('energy.services.timezone.now', return_value=now):
+            catch_up(self.session)
+            self.assertEqual(self.session.elapsed_s, 3600)
+            self.assertEqual(self.session.last_tick_wall, now - timedelta(seconds=1))
+            catch_up(self.session)
+        self.assertEqual(self.session.elapsed_s, 3601)
+        self.assertAlmostEqual(self.session.energy_wh, 2 * 3601 / 3600)
+        self.assertFalse(self.session.gaps.exists())
+
+    def test_ten_minute_hidden_tab_response_time(self):
+        for slug, power in [('cuenca-banco', 2), ('cuenca-sede', 240)]:
+            session = Session.objects.get(site__slug=slug, status='running')
+            base = f'/api/sessions/{session.id}'
+            for zone in session.site.zones.all():
+                self.post('zones/' + zone.slug, {'on': True}, base)
+            session.refresh_from_db()
+            now = timezone.now()
+            session.playing, session.last_tick_wall = True, now - timedelta(seconds=600)
+            session.save()
+            started = perf_counter()
+            with patch('energy.services.timezone.now', return_value=now):
+                state = self.state(slug)
+            duration = perf_counter() - started
+            print(f'Catch-up 10 min {slug}: {duration:.3f}s, {state["session"]["energy_wh"]:.6f} Wh')
+            self.assertAlmostEqual(state['session']['energy_wh'], power * 600 * session.speed / 3600)
+            self.assertEqual(state['gaps'], [])
+            self.assertTrue(state['session']['playing'])
+            self.assertLess(duration, 5, 'Catch-up blocks the demo for more than 5 seconds')
+
+    def test_validation_prevents_overflow_nul_and_far_dates(self):
+        self.post('advance', {'seconds': 10**400}, expected=400)
+        row = dict(reading_id='security-probe', zone='carga-5v', instant='2026-11-27T00:00:00Z',
+                   voltage_v=5, current_a=.4)
+        for rows in [[dict(row, reading_id='security\x00nul')],
+                     [row, dict(row, reading_id='future', instant='9999-01-01T00:00:00Z')]]:
+            result = self.post('readings', {'source': 'device', 'readings': rows}, expected=400)
+            self.assertEqual(result['error'], 'validation')
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.elapsed_s, 0)
+        self.assertIsNone(self.session.telemetry_origin)
+        self.assertEqual(self.session.readings.count(), 0)
+
+    def test_body_errors_are_json_and_max_batch_fits(self):
+        for raw in ['{', '[0]', b'\xff', '{"seconds":' + '[' * 12000 + '0' + ']' * 12000 + '}',
+                    ' ' * (settings.DATA_UPLOAD_MAX_MEMORY_SIZE + 1)]:
+            response = self.client.post(self.base + '/advance', raw, content_type='application/json')
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response['Content-Type'], 'application/json')
+            self.assertEqual(response.json()['error'], 'validation')
+        row = dict(reading_id='r' * 200, zone='carga-5v', instant='2026-11-27T00:00:00Z',
+                   voltage_v=5, current_a=.4)
+        body = {'source': 'device', 'readings': [row] * 5000}
+        self.assertGreater(len(json.dumps(body)), 1048576)
+        self.assertLess(len(json.dumps(body)), settings.DATA_UPLOAD_MAX_MEMORY_SIZE)
+        self.post('readings', body)
+        self.assertEqual(self.session.readings.count(), 1)
+        self.post('readings', {'source': 'device', 'readings': [row] * 5001}, expected=400)
+
+    def test_closed_session_report_has_no_current_power(self):
+        self.post('zones/carga-5v', {'on': True})
+        before = self.post('advance', {'seconds': 5})
+        created = self.client.post('/api/sites/cuenca-banco/sessions', '{}', content_type='application/json')
+        self.assertEqual(created.status_code, 200)
+        report = self.client.get(self.base + '/report').json()
+        self.assertEqual(report['values']['power_w'], 0)
+        self.assertEqual(report['values']['energy_wh'], before['session']['energy_wh'])
+        self.assertIn('Potencia actual: 0 vatios', report['text'])
 
     def test_validation_transaction_and_unique_alert(self):
         for action, body in [('zones/carga-5v', {'current_a': .81}), ('advance', {'seconds': True}),

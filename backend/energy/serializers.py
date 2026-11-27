@@ -68,7 +68,7 @@ def state_json(session, user):
 
 
 def report_json(session):
-    power = sum(session.zone_states.values_list('power_w', flat=True))
+    power = sum(session.zone_states.values_list('power_w', flat=True)) if session.status == 'running' else 0
     on_seconds = max(session.zone_states.values_list('on_seconds', flat=True), default=0)
     alert = session.alerts.order_by('t_s').first()
     energy = f'{session.energy_wh:.4f}'.replace('.', ',')

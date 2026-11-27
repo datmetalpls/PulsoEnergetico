@@ -52,11 +52,16 @@ def ingest(session, zone, reading_id, t_s, voltage_v, current_a, source='simulat
     return interval.flag
 
 
+def simulated_power(state):
+    zone = state.zone
+    return (zone.nominal_voltage_v * state.current_a if zone.kind == 'dc_load' else
+            zone.nominal_power_w * (state.intensity_pct / 100 if zone.dimmable else 1)) if state.on else 0
+
+
 def emit(session, state, suffix=''):
     zone = state.zone
     session.active_source = 'simulator'
-    power = (zone.nominal_voltage_v * state.current_a if zone.kind == 'dc_load' else
-             zone.nominal_power_w * (state.intensity_pct / 100 if zone.dimmable else 1)) if state.on else 0
+    power = simulated_power(state)
     return ingest(session, zone, f'{session.id}:{zone.slug}:{session.elapsed_s}{suffix}',
                   session.elapsed_s, zone.nominal_voltage_v, power / zone.nominal_voltage_v)
 
@@ -74,18 +79,39 @@ def advance(session, seconds):
     start, end = session.elapsed_s, session.elapsed_s + seconds
     interval = session.site.sample_interval_s
     if session.connected:
-        if session.zone_states.filter(last_t_s__isnull=True).exists():
-            for state in session.zone_states.select_related('zone'):
-                if state.last_t_s is None:
-                    emit(session, state)
-        points = list(range((start // interval + 1) * interval, end + 1, interval))
+        states = list(session.zone_states.select_related('zone').order_by('zone_id'))
+        points = range((start // interval + 1) * interval, end + 1, interval)
         # Exact /advance durations include a final partial sample.
-        if not points or points[-1] != end:
-            points.append(end)
-        for t_s in points:
-            session.elapsed_s = t_s
-            for state in session.zone_states.select_related('zone'):
-                emit(session, state)
+        times = [start, *points]
+        if times[-1] != end:
+            times.append(end)
+        readings, gaps = [], []
+        for t_s in times:
+            for state in states:
+                if t_s == start and state.last_t_s is not None:
+                    continue
+                zone = state.zone
+                result = integrate(state.last_t_s, state.power_w, t_s, interval, gap_pending=state.gap_pending)
+                if result.flag == 'gap_after' and state.last_t_s is not None:
+                    gaps.append(Gap(session=session, zone=zone, from_t_s=state.last_t_s, to_t_s=t_s))
+                power = simulated_power(state)
+                state.energy_wh += result.energy_wh
+                state.on_seconds += result.on_seconds
+                state.last_t_s, state.power_w, state.gap_pending = t_s, power, False
+                session.energy_wh = sum(s.energy_wh for s in states)
+                if session.energy_wh >= session.threshold_wh - 1e-9 and not session.alert_fired:
+                    Alert.objects.get_or_create(session=session, kind='threshold', defaults={
+                        't_s': t_s, 'energy_wh': session.energy_wh, 'threshold_wh': session.threshold_wh})
+                    session.alert_fired = True
+                readings.append(Reading(reading_id=f'{session.id}:{zone.slug}:{t_s}', session=session,
+                    zone=zone, t_s=t_s, instant=session.started_at + timedelta(seconds=t_s),
+                    voltage_v=zone.nominal_voltage_v, current_a=power / zone.nominal_voltage_v,
+                    power_w=power, interval_wh=result.energy_wh, energy_wh=state.energy_wh,
+                    flag=result.flag, source='simulator'))
+        Reading.objects.bulk_create(readings, batch_size=1000)
+        Gap.objects.bulk_create(gaps)
+        ZoneState.objects.bulk_update(states, ['energy_wh', 'on_seconds', 'last_t_s', 'power_w', 'gap_pending'])
+        session.active_source = 'simulator'
     session.elapsed_s = end
     session.scenario_offset_s += seconds
     session.save()
@@ -98,14 +124,10 @@ def catch_up(session):
     ticks = max(0, math.floor((now - session.last_tick_wall).total_seconds()))
     if not ticks:
         return
-    processed = min(ticks, 120)
+    # Bound work per request without discarding time or inventing a connection gap.
+    processed = min(ticks, 3600)
     advance(session, processed * session.speed)
-    if ticks > processed:
-        session.zone_states.update(gap_pending=True)
-        session.elapsed_s += (ticks - processed) * session.speed
-        session.scenario_offset_s += (ticks - processed) * session.speed
-        immediate(session)
-    session.last_tick_wall += timedelta(seconds=ticks)
+    session.last_tick_wall += timedelta(seconds=processed)
     session.save()
 
 

@@ -102,7 +102,30 @@ Todas las rutas son sin barra final, bajo el mismo origen:
 
 - Decisiones del contrato: [CONTRACT-NOTES.md](CONTRACT-NOTES.md). Destacan el origen temporal de importación, cierre al crear otra sesión, `on_seconds` del reporte como máximo por zona y excepción de respuesta duplicada. No se modificó el contrato congelado.
 - Arranque y variables: [README.md](README.md). Compose superpone `.env` sobre `.env.example`; los valores de demo solo están en `.env.example`. Cambiar contraseña de un usuario ya creado requiere hacerlo explícitamente; seed_demo no la reemplaza.
-- El Dockerfile intenta compilar Angular durante el build; si falta o falla, usa index de reemplazo con advertencia. Para una SPA completa el primer build necesita dependencias disponibles. El segundo arranque con imágenes locales no necesita compilar Angular. Para EC2 se puede transportar la imagen compilada en el portátil; no se implementó otra ruta de empaquetado.
+- El Dockerfile exige Angular compilado y aborta ante cualquier fallo; el primer build necesita dependencias disponibles. El segundo arranque con imágenes locales no necesita compilar Angular. Para EC2 se puede transportar la imagen compilada en el portátil; no se implementó otra ruta de empaquetado.
 - Npm reportó **43 vulnerabilidades** del árbol de frontend: 2 bajas, 25 moderadas, 14 altas y 2 críticas; también cuatro avisos de selectores CSS omitidos. No se modificó frontend ni se intentó resolverlos: su responsable debe evaluar cuáles afectan al artefacto distribuido.
 - CI está creado y sin ejecutar en GitHub, conforme al ajuste de alcance. Sin pruebas con hardware ni servicios externos. El reporte solo produce una vista previa local, nunca envía a Discord.
 - Memoria persistente fue leída al inicio; su actualización queda al coordinador porque el vault está fuera de las rutas de escritura asignadas a este worker.
+
+## Correcciones de auditoría — 2026-11-27 (Codex; sin commit)
+
+- SEG-04: entero gigantesco, NUL en reading_id y fechas fuera del rango de los contadores devuelven 400 de validación, sin escrituras parciales.
+- A1: Angular obligatorio, con capas separadas para dependencias y código; contexto sin documentación, auditorías, diseños, scripts, Markdown, entornos privados, node_modules ni dist. La prueba de shell simula fallos de ambos comandos npm y exige salida no cero.
+- M1: muestras del simulador guardadas con bulk_create/bulk_update; misma función pura de integración, muestreo y alerta al segundo correcto. Catch-up de hasta 3600 ticks reales por petición; el tiempo sobrante queda pendiente, sin crear un gap. Se comprueban 600 segundos ocultos, alerta a 36 s, ausencia de doble avance y recuperación de 3601 segundos en dos pasadas.
+- SEG-01/A2/QA-04: EC2 exige las seis credenciales explícitas, no vacías y distintas del ejemplo, incluso entre comillas o con comentarios. Prueba de cada clave ausente, vacía y pública, además del caso válido; no se imprimen valores. Si IMDS no responde, se conserva el fallback local documentado.
+- QA-01: cuerpo máximo 2 MiB, errores JSON y de tamaño en JSON; lote real de 5000 filas con IDs de 200 caracteres pasa (se usa un ID repetido para probar también idempotencia), 5001 falla.
+- QA-03: reporte cerrado con 0 W; conserva Wh. SEG-06: sqlparse fijado a **0.6.1**, disponible en [PyPI](https://pypi.org/project/sqlparse/0.6.1/).
+
+Verificación ejecutada:
+
+| Comando / caso | Resultado |
+|---|---|
+| `docker compose up --build -d` | OK, Angular compilado y web recreada; datos conservados |
+| `docker compose exec -T web python manage.py test` | 23 pruebas en 6,021 s: OK, 2 omitidas porque los archivos de despliegue se excluyen de la imagen |
+| `python3 -m unittest discover -s backend -p test_deployment.py` | 2 pruebas de despliegue en el host: OK (incluyen las omitidas en la imagen) |
+| `python3 -I scripts/acceptance.py .env.example contracts/telemetry.example.json` | **19/19 PASS** |
+| GET state tras 10 minutos sin polling (reloj simulado, BD de pruebas) | Banco: **0,029 s**, **0,333333 Wh**; sede ×60: **0,067 s**, **2400 Wh**; ambos sin gaps y reproduciendo |
+| `shellcheck scripts/deploy-ec2.sh`, `bash -n scripts/deploy-ec2.sh`, `git diff --check` | OK |
+| `uvx --cache-dir /private/tmp/pulso-security-uv-cache pip-audit -r backend/requirements.txt --no-deps --disable-pip --format columns` | **No known vulnerabilities found** para las versiones fijadas |
+
+Sin ejecutar AWS, desconexión física del Wi-Fi ni navegador con pestaña oculta durante diez minutos reales; la medición adelanta el reloj del servidor. No se tocó frontend ni se corrigieron sus avisos npm. Más de una hora sin polling se recupera en varias peticiones acotadas. Los gaps de desconexiones explícitas siguen conservándose como historial; no se borran datos previos a la corrección.

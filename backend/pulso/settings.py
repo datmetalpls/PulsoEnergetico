@@ -36,7 +36,7 @@ CSRF_FAILURE_VIEW = 'energy.views.csrf_failure'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
-DATA_UPLOAD_MAX_MEMORY_SIZE = 1048576
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
 CACHES = {'default': {
     'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
     'LOCATION': os.getenv('CACHE_DIR', str(Path(tempfile.gettempdir()) / 'pulso-cache')),

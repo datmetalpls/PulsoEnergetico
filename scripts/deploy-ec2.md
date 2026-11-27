@@ -10,7 +10,8 @@ cd "<repo>"
 cp .env.example .env.ec2
 python3 -c "import secrets;print(secrets.token_urlsafe(50))"   # → DJANGO_SECRET_KEY
 python3 -c "import secrets;print(secrets.token_urlsafe(24))"   # → POSTGRES_PASSWORD
-# editar .env.ec2 y cambiar DJANGO_SECRET_KEY, POSTGRES_PASSWORD y las 3 DEMO_*_PASSWORD
+# editar .env.ec2 y cambiar DJANGO_SECRET_KEY, POSTGRES_PASSWORD y las 4 DEMO_*_PASSWORD
+# DEMO_CUENCA_PASSWORD, DEMO_PUENTE_PASSWORD, DEMO_OBSERVER_PASSWORD, DEMO_OPERATOR_PASSWORD
 # (ALLOWED_HOSTS lo completa el script)
 
 # §2 imagen precompilada para amd64 (Apple Silicon: tarda varios minutos más, por la emulación)
@@ -20,6 +21,7 @@ docker pull --platform linux/amd64 postgres:17-alpine
 docker save pulso-web:demo postgres:17-alpine | gzip > pulso-images.tar.gz
 ```
 Las contraseñas del jurado y del equipo **se fijan solo en el primer arranque**, porque `seed_demo` no las sobrescribe.
+El cuarto usuario, `operador_demo`, opera las dos localidades. El script aborta si cualquiera de esas seis credenciales falta en `.env`, está vacía o coincide con `.env.example`. Si los usuarios ya existen, cambiar `.env` no rota sus contraseñas: ejecutar `docker compose exec web python manage.py changepassword <usuario>` para cada cuenta afectada, sin borrar el volumen.
 
 ## 1. Consola del laboratorio
 1. *Start Lab* → anotar «**Used $X of $50**». En *AWS Details* → *Download PEM* → `labsuser.pem` → `chmod 400 labsuser.pem`. ⚠ El nombre del key pair debería ser `vockey`.
@@ -42,7 +44,7 @@ ssh -i labsuser.pem ubuntu@$IP 'chmod +x deploy-ec2.sh && ./deploy-ec2.sh'
 3. Clona el repo en `~/PulsoEnergetico` o hace `git pull --ff-only`. Si el directorio ya existe porque se copió `.env`, clona en un directorio temporal y copia los archivos sin pisar `.env`. Si ya hay un `docker-compose.yml` copiado por scp (§3), lo usa tal cual.
 4. Escribe `compose.ec2.yml`: bind `0.0.0.0:8080`, `image: pulso-web:demo`, sin build, `restart: unless-stopped`.
 5. Ejecuta `docker load` del archivo `.tar.gz`, solo si cambió (compara el sha256), y comprueba que la imagen sea amd64.
-6. Exige `.env` con una `DJANGO_SECRET_KEY` distinta de la de ejemplo y escribe `ALLOWED_HOSTS` con la IP y el DNS públicos (IMDSv2).
+6. Exige las seis credenciales privadas en `.env` (clave Django, contraseña Postgres y cuatro usuarios), todas distintas de sus ejemplos, y escribe `ALLOWED_HOSTS` con la IP y el DNS públicos (IMDSv2).
 7. Ejecuta `docker compose -p pulso -f docker-compose.yml -f compose.ec2.yml up -d` **sin `--build`** y espera la respuesta de `/api/auth/me` y la línea `Demo ready` en el log (`seed_demo` lo ejecuta el entrypoint).
 8. Ejecuta `verify`: inicia sesión como `observador` con CSRF y luego hace `GET /api/localities` y `GET /api/sites/cuenca-sede/state`.
 

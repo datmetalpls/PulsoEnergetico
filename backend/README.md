@@ -15,7 +15,7 @@ Abrir http://localhost:8080. Compose requiere versión 2.24 o posterior: usa `.e
 
 Usuarios: `operador_cuenca`, `operador_puente`, `observador`; contraseñas definidas por las correspondientes variables de `.env.example` / `.env`. La semilla crea las contraseñas solo una vez y conserva las existentes.
 
-El build multistage compila Angular con Node 22 y copia `frontend/dist/pulso/browser` a WhiteNoise. Si falta o no compila, genera una página de reemplazo y una advertencia de build. Recompilar la imagen al completar frontend; no se necesita CORS ni otro servidor.
+El build multistage compila Angular con Node 22 y copia `frontend/dist/pulso/browser` a WhiteNoise. Si faltan dependencias, falla la compilación o falta el index, el build aborta. Recompilar la imagen al completar frontend; no se necesita CORS ni otro servidor.
 
 ## Variables
 

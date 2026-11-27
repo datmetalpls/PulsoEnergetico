@@ -5,3 +5,9 @@
 **/__pycache__
 **/.venv
 backend/staticfiles
+docs/
+audits/
+design/
+scripts/
+**/*.md
+.env.*

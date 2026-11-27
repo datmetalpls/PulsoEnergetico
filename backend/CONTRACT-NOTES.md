@@ -7,11 +7,13 @@
 - `GET /api/localities`: lista `[{slug,name,country,timezone,sites:[{slug,name,kind,fictitious,budget_kwh_day,sample_interval_s}]}]`, compatible con `LocalityWithSites[]` del frontend; el contrato no incluye un fixture para esa ruta.
 - `on_seconds` del reporte es el máximo entre zonas (tiempo efectivo de la carga más utilizada), para no sumar segundos simultáneos como si fueran duración de ensayo. El detalle por zona está en state.
 - `/advance` acepta segundos enteros y emite una última lectura parcial si el avance no cae sobre el muestreo; así procesa exactamente N segundos. Los ticks normales mantienen el muestreo de 1/60 segundos. Los cambios inmediatos usan sufijo determinista `:change:N` porque el id de una muestra programada en el mismo t no puede reutilizarse para otra potencia.
-- Un corte explícito siempre crea Gap al reconectar, incluso si dura menos de tres muestras. El exceso de 120 ticks por petición tampoco atribuye energía y genera Gap al siguiente dato.
+- Un corte explícito siempre crea Gap al reconectar, incluso si dura menos de tres muestras. Ocultar la pestaña no es un corte: el catch-up procesa hasta 3600 ticks reales por petición con escrituras en lote; conserva el tiempo restante para próximas peticiones, sin descartarlo ni crear gaps ficticios.
 - «Siguiente franja» después de noche salta a las 08:00 del día siguiente; solo mueve scenario_offset_s. Velocidad de sede: 60 o 300; banco: 1.
 - El presupuesto nuevo se aplica también a la sesión activa; no borra una alerta anterior. Los parámetros eléctricos se validan contra el voltaje y la corriente nominal/máxima de la zona.
 - Auditoría: cada escritura API exitosa y comandos de carga registran AuditEvent; nunca se registran contraseñas. Los avances por polling son cambios internos bajo el bloqueo de la sesión.
-- Docker permite un index de reemplazo si Angular falta o falla; el stage escribe una advertencia. El job Angular de CI siempre exige una compilación real. Compose lee `.env.example` y superpone `.env` si existe; los valores de demostración están únicamente en `.env.example`.
+- Docker exige Angular compilado: un fallo de `npm ci`, `npm run build` o la ausencia de `index.html` aborta el build. Compose lee `.env.example` y superpone `.env` si existe; el despliegue EC2 exige redefinir las seis credenciales privadas.
+- Importación: hasta 5000 lecturas y un cuerpo JSON de hasta 2 MiB (incluye estructura, IDs y comentarios). Un lote ASCII de 5000 IDs de 200 caracteres cabe en ese límite; si los comentarios o el escape Unicode lo exceden, dividir el lote. Los errores de tamaño y JSON devuelven 400 JSON de validación. Los tiempos importados deben caber en ambos contadores de sesión de 32 bits; IDs con NUL son inválidos.
+- El reporte de una sesión cerrada conserva energía y tiempos, pero su potencia actual es 0 W.
 
 ## Propuestas de cambio de contrato (pendientes de aprobación de Claude)
 
