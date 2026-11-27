@@ -67,3 +67,17 @@ python3 -I scripts/acceptance.py .env.example contracts/telemetry.example.json  
 Luego abrir http://localhost:8080 y entrar como `operador_cuenca` (contraseña en `.env.example`). Para el respaldo con datos precargados: `docker compose exec web python manage.py load_backup_demo`.
 
 Limitaciones: los datos son simulados y están etiquetados en pantalla. La sede usa una escala de tiempo fija de ×60. Los beneficios de ahorro y climáticos (ODS 13) son hipótesis por validar.
+
+## 6. Auditoría y correcciones (2026-11-27, noche)
+Equipo: Codex (seguridad), Antigravity (legibilidad), OpenCode + DeepSeek v4.1 Flash (QA) y Claude (arquitectura). Informes en `audits/`. Además, mejoras de Antigravity Gemini 4 Hydrogen (interfaz) y Neon (backend y operación) en ramas propias, integradas tras revisión.
+
+| Auditoría | Crít. | Alta | Media | Baja | Nota |
+|---|---|---|---|---|---|
+| Seguridad | 0 | 2 | 4 | 3 | 1 |
+| Legibilidad | 0 | 1 | 5 | 5 | 1 |
+| Arquitectura | 0 | 2 | 4 | 4 | 3 |
+| QA | 0 | 0 | 4 | 5 | 7 |
+
+Corregido e integrado: SEG-01/A2/QA-04 (credenciales de EC2 obligatorias y privadas), SEG-03 (límite de intentos de login), SEG-04 (500 → 400 en JSON), SEG-06 (sqlparse 0.6.1), A1 (el build falla si Angular falla; .dockerignore; usuario no root), M1 (catch-up en lote, sin gaps ficticios), M2 (`setpoint_current_a`), QA-01/02/03/08, LEG-01 (README) y LEG-02 (textos). También accesibilidad AA, `aria-live` y orden en móvil.
+Verificación final del integrador (commit fe55400): Django **OK** (21 pruebas en la imagen y 2 de despliegue en el host), aceptación por API **19/19**, navegador con `operador_demo` (2 W → 0,0100 Wh a 18 s; 10 s apagado sin cambio; alerta visible a 36 s; refrescar mantiene la banda «UMBRAL ALCANZADO»; Puente Alto operable), 390 px sin desborde y 0 errores de consola. Capturas: [1440](evidencia/navegador-final-1440.png), [390](evidencia/navegador-final-390.png).
+Para después: refactor de componentes (LEG-02/03), cabeceras X-Frame-Options/CSP y no-store, registro de logins fallidos, actualización de Angular por los avisos de npm, HTTPS y carga del historial (SEG-09).
