@@ -1,0 +1,24 @@
+/* Pulso Energético · Ver pares AA en tokens.json; no remapear temas globalmente. */
+:root {
+  --pe-petroleo: #06323B;
+  --pe-crema: #FFF1D9;
+  --pe-dorado: #FFC04C;
+  --pe-verde: #176B46;
+  --pe-verde-claro: #83D9AA;
+  --pe-alerta: #B42318;
+  --pe-alerta-clara: #FF9B91;
+  --pe-alerta-fondo: #FDECE9;
+  --pe-alerta-fondo-noche: #421915;
+  --pe-tinta: #132F33;
+  --pe-texto-secundario: #455F60;
+  --pe-blanco: #FFFFFF;
+  --pe-negro: #000000;
+  --pe-tarde: #F3DFC0;
+  --pe-noche: #08272E;
+  --pe-superficie-noche: #103D46;
+  --pe-dorado-texto: #805000;
+  --pe-foco: #005FCC;
+  --pe-foco-noche: #8BCCFF;
+  --pe-font-titular: "Fraunces", Georgia, serif;
+  --pe-font-ui: "DM Sans", system-ui, sans-serif;
+}
