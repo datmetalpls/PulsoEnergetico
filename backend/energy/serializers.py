@@ -42,6 +42,7 @@ def state_json(session, user):
         zones.append({'slug': z.slug, 'name': z.name, 'kind': z.kind, 'dimmable': z.dimmable,
             'simulated_control': True, 'on': s.on, 'indicator': {'led': 'green' if enabled else 'off', 'label': label},
             'voltage_v': z.nominal_voltage_v, 'current_a': s.power_w / z.nominal_voltage_v,
+            'setpoint_current_a': s.current_a if z.kind == 'dc_load' else None,
             'max_current_a': z.max_current_a, 'intensity_pct': s.intensity_pct if z.dimmable else None,
             'power_w': s.power_w, 'energy_wh': s.energy_wh, 'on_seconds': s.on_seconds})
     return {'contract_version': '0.1', 'data_label': 'Datos simulados', 'server_time': timezone.now().isoformat(),

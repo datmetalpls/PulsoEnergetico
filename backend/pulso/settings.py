@@ -1,4 +1,5 @@
 import os
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 
@@ -36,3 +37,9 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1048576
+CACHES = {'default': {
+    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+    'LOCATION': os.getenv('CACHE_DIR', str(Path(tempfile.gettempdir()) / 'pulso-cache')),
+}}
+LOGIN_RATE_LIMIT = int(os.getenv('LOGIN_RATE_LIMIT', '5'))
+LOGIN_RATE_WINDOW_S = int(os.getenv('LOGIN_RATE_WINDOW_S', '60'))

@@ -55,4 +55,4 @@ class Command(BaseCommand):
                 if not Session.objects.filter(site=site, status='running').exists():
                     session = new_session(site)
                     audit(None, session, 'seed_demo')
-        self.stdout.write(self.style.SUCCESS('Demo ready: 2 localities, 4 sites, 3 users.'))
+        self.stdout.write(self.style.SUCCESS(f'Demo ready: 2 localities, 4 sites, {len(users)} users.'))

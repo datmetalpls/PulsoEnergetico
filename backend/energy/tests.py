@@ -1,9 +1,12 @@
+import io
 import json
+import os
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.management import call_command
 from django.db import transaction, IntegrityError, connection
 from django.test import TestCase, Client
@@ -204,7 +207,7 @@ class DemoTests(TestCase):
             expected = json.loads((settings.BASE_DIR.parent / 'contracts' / example).read_text())
             self.assertEqual(actual.keys(), expected.keys())
             self.assertEqual(actual['session'].keys(), expected['session'].keys())
-            self.assertEqual(actual['zones'][0].keys(), expected['zones'][0].keys())
+            self.assertEqual(actual['zones'][0].keys(), expected['zones'][0].keys() | {'setpoint_current_a'})
         self.post('advance', {'seconds': 610})
         state = self.state()
         self.assertEqual(len(state['series']['carga-5v']), 600)
@@ -226,3 +229,70 @@ class DemoTests(TestCase):
         self.assertAlmostEqual(backup.energy_wh, .02, places=9)
         self.assertEqual(backup.alerts.count(), 1)
         self.assertEqual(backup.zone_states.get().on_seconds, 36)
+
+    def test_seed_demo_reports_actual_user_count(self):
+        out = io.StringIO()
+        with patch.dict(os.environ, {'DEMO_OPERATOR_PASSWORD': 'Demo-2026'}):
+            call_command('seed_demo', stdout=out)
+        self.assertIn('Demo ready: 2 localities, 4 sites, 4 users.', out.getvalue())
+        out_three = io.StringIO()
+        with patch.dict(os.environ, {'DEMO_OPERATOR_PASSWORD': ''}):
+            call_command('seed_demo', stdout=out_three)
+        self.assertIn('Demo ready: 2 localities, 4 sites, 3 users.', out_three.getvalue())
+
+    def test_setpoint_current_a_preserved_when_off(self):
+        initial = self.state('cuenca-banco')['zones'][0]
+        self.assertFalse(initial['on'])
+        self.assertEqual(initial['current_a'], 0.0)
+        self.assertEqual(initial['power_w'], 0.0)
+        self.assertAlmostEqual(initial['setpoint_current_a'], 0.4)
+
+        adjusted = self.post('zones/carga-5v', {'current_a': 0.65})['zones'][0]
+        self.assertFalse(adjusted['on'])
+        self.assertEqual(adjusted['current_a'], 0.0)
+        self.assertEqual(adjusted['power_w'], 0.0)
+        self.assertAlmostEqual(adjusted['setpoint_current_a'], 0.65)
+
+        enabled = self.post('zones/carga-5v', {'on': True})['zones'][0]
+        self.assertTrue(enabled['on'])
+        self.assertAlmostEqual(enabled['current_a'], 0.65)
+        self.assertAlmostEqual(enabled['setpoint_current_a'], 0.65)
+        self.assertAlmostEqual(enabled['power_w'], 3.25)
+
+        disabled = self.post('zones/carga-5v', {'on': False})['zones'][0]
+        self.assertFalse(disabled['on'])
+        self.assertEqual(disabled['current_a'], 0.0)
+        self.assertAlmostEqual(disabled['setpoint_current_a'], 0.65)
+
+        for zone in self.state('cuenca-sede')['zones']:
+            self.assertIsNone(zone['setpoint_current_a'])
+
+    def test_login_rate_limiting(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        anon = Client()
+        bad = json.dumps({'username': 'operador_cuenca', 'password': 'wrong-password'})
+        good = json.dumps({'username': 'operador_cuenca', 'password': os.environ['DEMO_CUENCA_PASSWORD']})
+        limit = settings.LOGIN_RATE_LIMIT
+        window = settings.LOGIN_RATE_WINDOW_S
+
+        with patch('energy.views.time.time', return_value=1000.0):
+            for _ in range(limit):
+                r = anon.post('/api/auth/login', bad, content_type='application/json', REMOTE_ADDR='10.0.0.1')
+                self.assertEqual(r.status_code, 403)
+            blocked = anon.post('/api/auth/login', good, content_type='application/json', REMOTE_ADDR='10.0.0.1')
+            self.assertEqual(blocked.status_code, 429)
+            self.assertEqual(blocked.json(), {'error': 'rate_limited'})
+            self.assertGreaterEqual(int(blocked['Retry-After']), 1)
+
+            # Another client IP is unaffected and multiple valid logins do not trip the limiter.
+            for _ in range(limit + 2):
+                ok = anon.post('/api/auth/login', good, content_type='application/json', REMOTE_ADDR='10.0.0.2')
+                self.assertEqual(ok.status_code, 200)
+
+        # After the window expires, the original IP can log in again and its failure counter resets.
+        with patch('energy.views.time.time', return_value=1000.0 + window + 1):
+            recovered = anon.post('/api/auth/login', good, content_type='application/json', REMOTE_ADDR='10.0.0.1')
+            self.assertEqual(recovered.status_code, 200)
+            after_reset = anon.post('/api/auth/login', bad, content_type='application/json', REMOTE_ADDR='10.0.0.1')
+            self.assertEqual(after_reset.status_code, 403)
