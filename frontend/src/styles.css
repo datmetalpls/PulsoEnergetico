@@ -2,20 +2,20 @@
   --bg: #f3f6f4;
   --surface: #ffffff;
   --surface-alt: #eaf0ec;
-  --border: #c5d1ca;
+  --border: #b6c5bc;
   --text: #122018;
   --text-muted: #42544a;
   --accent: #0c6b4b;
   --accent-contrast: #ffffff;
   --focus-ring: #005fcc;
+  --range-track: #c5d1ca;
+  --range-track-border: #42544a;
   --danger-bg: #fef1f1;
   --danger-border: #b42318;
   --danger-text: #7a1410;
   --warn-bg: #fff8e6;
   --warn-border: #b45309;
   --warn-text: #6b3100;
-  --discord-bg: #f3f4fe;
-  --discord-border: #4e5ae6;
   --chart-grid: #dce4df;
   --chart-total: #0b5ed7;
   --chart-zone-1: #0c6b4b;
@@ -26,12 +26,14 @@
   --bg: #f3f6f4;
   --surface: #ffffff;
   --surface-alt: #eaf0ec;
-  --border: #c5d1ca;
+  --border: #b6c5bc;
   --text: #122018;
   --text-muted: #42544a;
   --accent: #0c6b4b;
   --accent-contrast: #ffffff;
   --focus-ring: #005fcc;
+  --range-track: #c5d1ca;
+  --range-track-border: #42544a;
   --chart-grid: #dce4df;
 }
 
@@ -39,12 +41,14 @@
   --bg: #fbf3e6;
   --surface: #fffcf7;
   --surface-alt: #f4e6d0;
-  --border: #d8c3a5;
+  --border: #cbb18c;
   --text: #2a1c0d;
   --text-muted: #5c4328;
   --accent: #8f4700;
   --accent-contrast: #ffffff;
   --focus-ring: #005fcc;
+  --range-track: #d8c3a5;
+  --range-track-border: #5c4328;
   --chart-grid: #e8d8c1;
 }
 
@@ -52,20 +56,20 @@
   --bg: #0f1714;
   --surface: #17231e;
   --surface-alt: #1f2f29;
-  --border: #334a41;
+  --border: #3a544a;
   --text: #eff6f2;
-  --text-muted: #b7c9c0;
+  --text-muted: #c2d4cb;
   --accent: #3cd099;
   --accent-contrast: #081c14;
   --focus-ring: #7ec8ff;
+  --range-track: #334a41;
+  --range-track-border: #b7c9c0;
   --danger-bg: #3b1414;
   --danger-border: #f97066;
   --danger-text: #ffd6d3;
   --warn-bg: #362507;
   --warn-border: #f59e0b;
   --warn-text: #fde68a;
-  --discord-bg: #1e223d;
-  --discord-border: #818cf8;
   --chart-grid: #2a3e36;
   --chart-total: #60a5fa;
   --chart-zone-1: #3cd099;
@@ -83,6 +87,7 @@ body {
   min-height: 100vh;
   background-color: var(--bg);
   color: var(--text);
+  --bs-border-color: var(--border);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -111,7 +116,7 @@ body {
 .pulso-shell :focus-visible {
   outline: 3px solid var(--focus-ring) !important;
   outline-offset: 2px !important;
-  box-shadow: none !important;
+  box-shadow: 0 0 0 1px var(--surface) !important;
 }
 
 .btn-pulso-primary {
@@ -121,11 +126,26 @@ body {
   font-weight: 700;
 }
 
-.btn-pulso-primary:hover,
+.btn-pulso-primary:hover {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  filter: brightness(0.94);
+}
+
+.theme-night .btn-pulso-primary:hover {
+  filter: brightness(1.08);
+}
+
 .btn-pulso-primary:focus-visible {
   background-color: var(--accent);
   color: var(--accent-contrast);
-  filter: brightness(1.08);
+}
+
+.btn-pulso-primary:disabled {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+  opacity: 0.55;
 }
 
 .btn-pulso-outline {
@@ -138,6 +158,14 @@ body {
 .btn-pulso-outline:hover {
   background-color: var(--surface-alt);
   color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.btn-pulso-outline:disabled {
+  background-color: var(--surface);
+  color: var(--text-muted);
+  border-color: var(--border);
+  opacity: 0.6;
 }
 
 .form-select,
@@ -147,11 +175,68 @@ body {
   border-color: var(--border);
 }
 
+.form-select.w-auto {
+  max-width: 100%;
+}
+
+.theme-night .form-select {
+  --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23eff6f2' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+  opacity: 0.9;
+}
+
 .form-select:focus,
 .form-control:focus {
   background-color: var(--surface);
   color: var(--text);
   border-color: var(--accent);
+}
+
+/* Accessible range inputs across Día, Tarde and Noche */
+.form-range {
+  height: 1.65rem;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  background-color: var(--range-track);
+  border: 1px solid var(--range-track-border);
+  border-radius: 999px;
+}
+
+.form-range::-moz-range-track {
+  height: 0.5rem;
+  background-color: var(--range-track);
+  border: 1px solid var(--range-track-border);
+  border-radius: 999px;
+}
+
+.form-range::-webkit-slider-thumb {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: -0.38rem;
+  background-color: var(--accent);
+  border: 2px solid var(--accent-contrast);
+  box-shadow: 0 0 0 1.5px var(--text);
+}
+
+.form-range::-moz-range-thumb {
+  width: 1.15rem;
+  height: 1.15rem;
+  background-color: var(--accent);
+  border: 2px solid var(--accent-contrast);
+  box-shadow: 0 0 0 1.5px var(--text);
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .badge-sim {
@@ -163,6 +248,31 @@ body {
   font-size: 0.75rem;
   padding: 0.35rem 0.6rem;
   border-radius: 0.375rem;
+}
+
+.badge-pulso-secondary {
+  background-color: var(--surface-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.375rem;
+}
+
+/* Progress bar contrast across themes */
+.pulso-progress {
+  height: 8px;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.pulso-progress-ok {
+  background-color: var(--accent);
+}
+
+.pulso-progress-danger {
+  background-color: var(--danger-border);
 }
 
 /* LED indicator */
@@ -224,12 +334,6 @@ body {
   border: 2px solid var(--danger-border) !important;
 }
 
-.discord-card {
-  background-color: var(--discord-bg);
-  border: 1.5px dashed var(--discord-border);
-  border-radius: 0.65rem;
-}
-
 .metric-value {
   font-size: clamp(1.65rem, 2.5vw, 2.25rem);
   font-weight: 800;
@@ -237,14 +341,13 @@ body {
 }
 
 /* Desktop 2-column layout and Mobile priority ordering:
-   estado -> control -> alerta -> cifras -> graficos */
+   estado (header) -> control -> alerta -> cifras -> graficos */
 .workspace-grid {
   display: grid;
   grid-template-columns: 360px 1fr;
   grid-template-areas:
     "controls metrics"
-    "alerts charts"
-    "alerts extras";
+    "alerts charts";
   gap: 1rem;
   align-items: start;
 }
@@ -253,7 +356,6 @@ body {
 .area-alerts   { grid-area: alerts; }
 .area-metrics  { grid-area: metrics; }
 .area-charts   { grid-area: charts; }
-.area-extras   { grid-area: extras; }
 
 @media (max-width: 991.98px) {
   .workspace-grid {
@@ -262,7 +364,6 @@ body {
       "controls"
       "alerts"
       "metrics"
-      "charts"
-      "extras";
+      "charts";
   }
 }

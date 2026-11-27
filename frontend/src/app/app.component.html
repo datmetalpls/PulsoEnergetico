@@ -7,7 +7,7 @@
         aria-label="Selector de prototipo navegable"
       >
         <div class="d-flex flex-wrap align-items-center gap-2">
-          <span class="badge bg-secondary">Prototipo ?mock=1</span>
+          <span class="badge-pulso-secondary">Prototipo ?mock=1</span>
           <label for="mock-state-select" class="small fw-bold mb-0">Estado:</label>
           <select
             id="mock-state-select"
@@ -28,6 +28,7 @@
                 class="btn"
                 [class.btn-pulso-primary]="store.mockBand() === b.key"
                 [class.btn-pulso-outline]="store.mockBand() !== b.key"
+                [attr.aria-pressed]="store.mockBand() === b.key"
                 (click)="store.setMockBand(b.key)"
               >
                 {{ b.icon }} {{ b.label }}
@@ -44,9 +45,10 @@
 
     <!-- Main View when state is loaded -->
     @if (store.state(); as s) {
-      <header class="pulso-card p-3 mb-3">
+      <!-- 1. Estado general y controles de sesión -->
+      <header class="pulso-card p-3 mb-3" aria-label="Estado general del recinto">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-          <div>
+          <div class="min-w-0">
             <div class="d-flex flex-wrap align-items-center gap-2">
               <h1 class="h4 fw-bold mb-0 me-2">Pulso Energético</h1>
 
@@ -88,6 +90,9 @@
               </span>
               <span class="pulso-surface-alt px-2 py-1 small fw-bold tabular-nums">
                 Ensayo: {{ s.session.elapsed_s }} s
+              </span>
+              <span class="pulso-surface-alt px-2 py-1 small fw-bold">
+                Estado: {{ sessionStatusText(s) }}
               </span>
 
               @if (store.auth().authenticated) {
@@ -151,7 +156,7 @@
                 </button>
               </div>
             } @else if (store.auth().authenticated) {
-              <div class="alert alert-warning py-1 px-2 mb-0 small" role="status">
+              <div class="band-warn py-1 px-2 mb-0 small" role="status">
                 👁 Solo lectura: tu usuario no opera este recinto.
                 Entra como <strong>{{ s.locality.slug === 'puente-alto' ? 'operador_puente' : 'operador_cuenca' }}</strong>
                 u <strong>operador_demo</strong> para encender, apagar o iniciar ensayos.
@@ -200,19 +205,36 @@
         }
       </header>
 
+      @if (store.actionFeedback(); as feedback) {
+        <div
+          class="band-warn p-3 mb-3 d-flex justify-content-between align-items-center gap-2"
+          role="alert"
+        >
+          <span class="fw-semibold">{{ feedback }}</span>
+          <button
+            type="button"
+            class="btn btn-sm btn-pulso-outline"
+            aria-label="Cerrar aviso"
+            (click)="store.dismissActionFeedback()"
+          >
+            Cerrar
+          </button>
+        </div>
+      }
+
       @if (store.errorMessage(); as err) {
         <div class="band-warn p-3 mb-3" role="alert">
           {{ err }}
         </div>
       }
 
-      <!-- Main Workspace Grid (Mobile: estado -> control -> alerta -> cifras -> graficos) -->
+      <!-- Main Workspace Grid (Mobile: estado [header] -> control -> alerta -> cifras -> graficos) -->
       <main class="workspace-grid">
-        <!-- Controls / Zones -->
+        <!-- 2. Controls / Zones -->
         <section class="area-controls d-flex flex-column gap-3" aria-label="Zonas y controles">
           @for (zone of s.zones; track zone.slug) {
             <article class="pulso-card p-3">
-              <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
                 <div class="d-flex align-items-center gap-2">
                   <span
                     class="led-dot"
@@ -231,7 +253,7 @@
                 </div>
 
                 @if (zone.simulated_control && zone.dimmable) {
-                  <span class="badge bg-secondary">control simulado</span>
+                  <span class="badge-pulso-secondary">control simulado</span>
                 }
               </div>
 
@@ -250,9 +272,14 @@
                 <!-- Bench current knob 0 - 0.80 A -->
                 @if (zone.kind === 'dc_load' && zone.max_current_a !== null) {
                   <div class="pulso-surface-alt p-2 mb-2">
-                    <div class="d-flex justify-content-between small fw-bold mb-1">
-                      <label [for]="'knob-' + zone.slug">Perilla de corriente</label>
-                      <span class="tabular-nums">{{ fmtCurrent(zone.current_a) }}</span>
+                    <div class="d-flex justify-content-between align-items-baseline gap-2 small fw-bold mb-1">
+                      <label [for]="'knob-' + zone.slug">Perilla de corriente (A)</label>
+                      <span class="tabular-nums text-end text-nowrap">
+                        {{ fmtCurrent(store.getBenchKnobCurrent(zone)) }}
+                        @if (!zone.on) {
+                          <span class="fw-normal pulso-muted"> · preajuste</span>
+                        }
+                      </span>
                     </div>
                     <input
                       [id]="'knob-' + zone.slug"
@@ -261,11 +288,21 @@
                       min="0"
                       [max]="zone.max_current_a"
                       step="0.01"
-                      [value]="zone.current_a"
+                      [value]="store.getBenchKnobCurrent(zone)"
+                      [attr.aria-valuemin]="0"
+                      [attr.aria-valuemax]="zone.max_current_a"
+                      [attr.aria-valuenow]="store.getBenchKnobCurrent(zone)"
+                      [attr.aria-valuetext]="benchKnobAriaText(zone)"
+                      [attr.aria-describedby]="'knob-scale-' + zone.slug"
                       (input)="onBenchCurrentInput(zone.slug, $event)"
+                      (change)="onBenchCurrentChange(zone.slug, $event)"
                     />
-                    <div class="d-flex justify-content-between small pulso-muted">
+                    <div
+                      [id]="'knob-scale-' + zone.slug"
+                      class="d-flex justify-content-between small pulso-muted tabular-nums"
+                    >
                       <span>0,00 A</span>
+                      <span>0,40 A (2,00 W)</span>
                       <span>{{ fmtCurrent(zone.max_current_a) }}</span>
                     </div>
                   </div>
@@ -274,9 +311,14 @@
                 <!-- Venue dimmable intensity 0 - 100 % -->
                 @if (zone.dimmable && zone.intensity_pct !== null) {
                   <div class="pulso-surface-alt p-2 mb-2">
-                    <div class="d-flex justify-content-between small fw-bold mb-1">
+                    <div class="d-flex justify-content-between align-items-baseline gap-2 small fw-bold mb-1">
                       <label [for]="'dim-' + zone.slug">Intensidad (control simulado)</label>
-                      <span class="tabular-nums">{{ zone.intensity_pct }} %</span>
+                      <span class="tabular-nums text-end text-nowrap">
+                        {{ zone.intensity_pct }} %
+                        @if (!zone.on) {
+                          <span class="fw-normal pulso-muted"> · preajuste</span>
+                        }
+                      </span>
                     </div>
                     <input
                       [id]="'dim-' + zone.slug"
@@ -286,79 +328,116 @@
                       max="100"
                       step="5"
                       [value]="zone.intensity_pct"
+                      [attr.aria-valuemin]="0"
+                      [attr.aria-valuemax]="100"
+                      [attr.aria-valuenow]="zone.intensity_pct"
+                      [attr.aria-valuetext]="intensityAriaText(zone)"
+                      [attr.aria-describedby]="'dim-scale-' + zone.slug"
                       (input)="onIntensityInput(zone.slug, $event)"
+                      (change)="onIntensityChange(zone.slug, $event)"
                     />
+                    <div
+                      [id]="'dim-scale-' + zone.slug"
+                      class="d-flex justify-content-between small pulso-muted tabular-nums"
+                    >
+                      <span>0 %</span>
+                      <span>50 %</span>
+                      <span>100 %</span>
+                    </div>
                   </div>
                 }
               }
 
-              <div class="d-flex justify-content-between small pulso-muted tabular-nums pt-1 border-top">
-                <span>{{ fmtVoltage(zone.voltage_v) }} · {{ fmtPower(zone.power_w) }}</span>
-                <span>{{ fmtEnergy(zone.energy_wh, s.site.kind) }} · {{ zone.on_seconds }} s on</span>
+              <div class="d-flex justify-content-between flex-wrap gap-1 small pulso-muted tabular-nums pt-2 border-top">
+                <span>
+                  {{ fmtVoltage(zone.voltage_v) }} ·
+                  @if (zone.kind === 'dc_load') {
+                    {{ fmtCurrent(zone.current_a) }} ·
+                  }
+                  {{ fmtPower(zone.power_w) }}
+                </span>
+                <span>{{ fmtEnergy(zone.energy_wh, s.site.kind) }} · {{ zone.on_seconds }} s encendida</span>
               </div>
             </article>
           }
         </section>
 
-        <!-- Persistent Alert Band (Sound optional) -->
+        <!-- 3. Persistent Alert Band (Visual always clear even when audio is muted) -->
         <section class="area-alerts d-flex flex-column gap-3" aria-label="Alertas">
           <div class="pulso-card p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
               <h2 class="h6 fw-bold mb-0">Alertas</h2>
               <button
                 type="button"
                 class="btn btn-sm"
                 [class.btn-pulso-primary]="audio.soundEnabled()"
                 [class.btn-pulso-outline]="!audio.soundEnabled()"
+                [attr.aria-pressed]="audio.soundEnabled()"
                 (click)="toggleSound()"
               >
-                {{ audio.soundEnabled() ? '🔊 Sonido activo' : '🔇 Activar sonido (opcional)' }}
+                {{ audio.soundEnabled() ? '🔊 Sonido activo' : '🔇 Audio silenciado (activar opcional)' }}
               </button>
             </div>
 
-            @if (s.alerts.length > 0 || s.session.alert_fired) {
-              <div class="band-danger p-3 mb-2" role="alert" aria-live="assertive">
-                <div class="fw-bold mb-1">
-                  ⚠ Límite alcanzado: {{ fmtEnergy(s.session.threshold_wh, s.site.kind) }}
-                </div>
-                @for (al of s.alerts; track al.id) {
-                  <div class="small mb-1">{{ al.message }}</div>
-                  <div class="small fw-semibold">Canal: {{ al.channel_label }}</div>
-                  @if (store.canOperate() && !al.acknowledged) {
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-light mt-2 fw-bold"
-                      (click)="store.ackAlert(al.id)"
-                    >
-                      Reconocer alerta
-                    </button>
+            <div aria-live="assertive" aria-atomic="true">
+              @if (s.alerts.length > 0 || s.session.alert_fired) {
+                <div class="band-danger p-3 mb-2" role="alert">
+                  <div class="fw-bold mb-1">
+                    ⚠ UMBRAL ALCANZADO: {{ fmtEnergy(s.session.threshold_wh, s.site.kind) }}
+                  </div>
+                  <div class="small fw-semibold mb-1">
+                    @if (audio.soundEnabled()) {
+                      Aviso visual y sonoro activo (timbre del navegador, 0,8 s).
+                    } @else {
+                      Aviso visual activo en pantalla (el audio está silenciado; el sonido es opcional).
+                    }
+                  </div>
+                  @for (al of s.alerts; track al.id) {
+                    <div class="small mb-1">{{ al.message }}</div>
+                    @if (store.canOperate() && !al.acknowledged) {
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-light mt-2 fw-bold"
+                        (click)="store.ackAlert(al.id)"
+                      >
+                        Reconocer alerta
+                      </button>
+                    }
                   }
-                }
-              </div>
-            } @else {
-              <div class="pulso-surface-alt p-2 small pulso-muted" role="status">
-                Sin alertas activas
-              </div>
-            }
+                </div>
+              } @else {
+                <div class="pulso-surface-alt p-2 small pulso-muted" role="status">
+                  Sin alertas activas · El aviso de umbral aparecerá aquí aunque el audio esté silenciado.
+                </div>
+              }
+            </div>
 
-            @if (!s.session.connected || s.gaps.length > 0) {
-              <div class="band-warn p-2 small fw-semibold mt-2" role="status">
-                ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() || 10 }} s
-              </div>
-            }
+            <div aria-live="polite" aria-atomic="true">
+              @if (!s.session.connected || s.gaps.length > 0) {
+                <div class="band-warn p-2 small fw-semibold mt-2" role="status">
+                  @if (store.totalGapSeconds() === 0) {
+                    ⚠ Conexión interrumpida · sin datos (en curso)
+                  } @else if (!s.session.connected) {
+                    ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s (en curso)
+                  } @else {
+                    ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s
+                  }
+                </div>
+              }
+            </div>
           </div>
         </section>
 
-        <!-- Three Key Metrics -->
+        <!-- 4. Three Key Metrics -->
         <section class="area-metrics" aria-label="Tres cifras clave">
           <div class="row g-3">
             <div class="col-12 col-md-4">
-              <div class="pulso-card p-3 h-100">
+              <div class="pulso-card p-3 h-100" aria-live="polite" aria-atomic="true">
                 <div class="small fw-bold text-uppercase pulso-muted">Potencia actual</div>
                 <div class="metric-value tabular-nums my-1">
                   {{ fmtPower(s.session.total_power_w) }}
                 </div>
-                <div class="small pulso-muted">{{ s.session.status_label }}</div>
+                <div class="small pulso-muted">{{ sessionStatusText(s) }}</div>
               </div>
             </div>
 
@@ -366,16 +445,18 @@
               <div
                 class="pulso-card p-3 h-100"
                 [class.metric-alert-border]="s.session.alert_fired"
+                aria-live="polite"
+                aria-atomic="true"
               >
                 <div class="small fw-bold text-uppercase pulso-muted">Energía acumulada</div>
                 <div class="metric-value tabular-nums my-1">
                   {{ fmtEnergy(s.session.energy_wh, s.site.kind) }}
                 </div>
-                <div class="progress mb-1" style="height: 8px;" aria-hidden="true">
+                <div class="progress pulso-progress mb-1" aria-hidden="true">
                   <div
                     class="progress-bar"
-                    [class.bg-danger]="s.session.alert_fired"
-                    [class.bg-success]="!s.session.alert_fired"
+                    [class.pulso-progress-danger]="s.session.alert_fired"
+                    [class.pulso-progress-ok]="!s.session.alert_fired"
                     [style.width.%]="progressPct()"
                   ></div>
                 </div>
@@ -386,13 +467,13 @@
             </div>
 
             <div class="col-12 col-md-4">
-              <div class="pulso-card p-3 h-100">
+              <div class="pulso-card p-3 h-100" aria-live="polite" aria-atomic="true">
                 <div class="small fw-bold text-uppercase pulso-muted">Restante al umbral</div>
                 <div class="metric-value tabular-nums my-1">
                   {{ fmtEnergy(s.session.remaining_wh, s.site.kind) }}
                 </div>
                 <div class="small pulso-muted tabular-nums">
-                  @if (s.session.time_to_threshold_s === null) {
+                  @if (s.session.total_power_w <= 0 || s.session.time_to_threshold_s === null) {
                     Consumo detenido
                   } @else if (s.session.time_to_threshold_s === 0) {
                     Límite alcanzado
@@ -405,7 +486,7 @@
           </div>
         </section>
 
-        <!-- Charts -->
+        <!-- 5. Charts -->
         <section class="area-charts" aria-label="Gráficos de potencia y energía">
           <app-energy-charts
             [series]="s.series"
@@ -427,7 +508,7 @@
         </div>
 
         @if (store.errorMessage(); as err) {
-          <div class="pulso-surface-alt p-2 small mb-3" role="status">{{ err }}</div>
+          <div class="band-warn p-2 small fw-semibold mb-3" role="alert">{{ err }}</div>
         }
 
         <form class="d-flex flex-column gap-3" (ngSubmit)="onLoginSubmit()">

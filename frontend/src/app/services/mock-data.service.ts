@@ -151,6 +151,7 @@ export class MockDataService {
         for (const z of base.zones) {
           z.on = false;
           z.current_a = 0;
+          z.setpoint_current_a = z.kind === 'dc_load' ? 0.4 : null;
           z.power_w = 0;
           z.energy_wh = 0;
           z.on_seconds = 0;
@@ -175,6 +176,7 @@ export class MockDataService {
           base.session.remaining_wh = 0.01;
           base.zones[0].on = false;
           base.zones[0].current_a = 0;
+          base.zones[0].setpoint_current_a = 0.4;
           base.zones[0].power_w = 0;
           base.zones[0].indicator = { led: 'off', label: 'Carga deshabilitada' };
           const flat = [
