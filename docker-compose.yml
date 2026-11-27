@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:17-alpine
+    restart: unless-stopped
     env_file:
       - path: .env.example
       - path: .env
@@ -15,12 +16,13 @@ services:
     networks: [database]
   web:
     build: .
+    restart: unless-stopped
     env_file:
       - path: .env.example
       - path: .env
         required: false
     ports:
-      - "127.0.0.1:8080:8000"
+      - "${WEB_BIND:-127.0.0.1}:8080:8000"
     depends_on:
       db:
         condition: service_healthy
