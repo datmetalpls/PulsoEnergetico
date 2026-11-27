@@ -340,30 +340,196 @@ body {
   line-height: 1.15;
 }
 
-/* Desktop 2-column layout and Mobile priority ordering:
-   estado (header) -> control -> alerta -> cifras -> graficos */
+/* Buttons >= 44px touch target */
+.pulso-shell .btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulso-shell .btn.w-100 {
+  display: flex;
+}
+
+/* Compact header: <= 2 lines on 390px mobile, single balanced layout on desktop */
+.pulso-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.header-row-top,
+.header-row-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.header-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.header-title {
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.header-primary-btn {
+  white-space: nowrap;
+  padding: 0 0.7rem;
+}
+
+.header-menu-btn {
+  min-width: 44px;
+  padding: 0 0.65rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.header-selectors {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.header-select-loc {
+  width: auto;
+  max-width: 120px;
+}
+
+.header-select-site {
+  width: auto;
+  max-width: 280px;
+}
+
+.header-clock {
+  flex-shrink: 0;
+}
+
+@media (max-width: 575.98px) {
+  .header-title {
+    font-size: 0.85rem;
+  }
+
+  .header-brand-group {
+    gap: 0.25rem;
+  }
+
+  .header-brand-group .badge-sim {
+    font-size: 0.52rem;
+    letter-spacing: 0.01em;
+    padding: 0.15rem 0.28rem;
+    white-space: nowrap;
+  }
+
+  .header-actions-group {
+    gap: 0.25rem;
+  }
+
+  .header-primary-btn {
+    font-size: 0.68rem;
+    padding: 0 0.38rem;
+  }
+
+  .header-menu-btn {
+    width: 44px;
+    padding: 0;
+  }
+
+  .header-selectors {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .header-select-loc {
+    max-width: 72px;
+    font-size: 0.72rem;
+    padding: 0.2rem 1.35rem 0.2rem 0.3rem;
+  }
+
+  .header-select-site {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 96px;
+    font-size: 0.72rem;
+    padding: 0.2rem 1.35rem 0.2rem 0.3rem;
+  }
+
+  .header-clock .small {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.34rem !important;
+  }
+}
+
+/* Right-side Hamburger Drawer */
+.pulso-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 1040;
+}
+
+.pulso-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 90vw);
+  z-index: 1050;
+  border-radius: 0.75rem 0 0 0.75rem;
+  padding: 1rem;
+  overflow-y: auto;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
+}
+
+/* Desktop (>=992 px): 2 independent vertical columns (Left: zonas + alertas, Right: cifras + graficos)
+   Mobile (<992 px): estado (header) -> control -> alerta -> cifras -> graficos */
 .workspace-grid {
   display: grid;
   grid-template-columns: 360px 1fr;
-  grid-template-areas:
-    "controls metrics"
-    "alerts charts";
   gap: 1rem;
   align-items: start;
 }
 
-.area-controls { grid-area: controls; }
-.area-alerts   { grid-area: alerts; }
-.area-metrics  { grid-area: metrics; }
-.area-charts   { grid-area: charts; }
+.workspace-col-left,
+.workspace-col-right {
+  min-width: 0;
+}
+
+.chart-empty-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.presentation-panel {
+  border-width: 2px;
+  border-color: var(--accent);
+}
 
 @media (max-width: 991.98px) {
   .workspace-grid {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "controls"
-      "alerts"
-      "metrics"
-      "charts";
   }
 }

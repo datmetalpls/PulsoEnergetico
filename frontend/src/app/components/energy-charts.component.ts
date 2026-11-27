@@ -25,84 +25,100 @@ interface GapRect {
           <h2 id="chart-power-title" class="h6 fw-bold mb-0">
             Potencia (W) vs tiempo del ensayo (s)
           </h2>
-          <div class="d-flex flex-wrap gap-2 small">
-            @for (line of powerLines(); track line.label) {
-              <span class="d-inline-flex align-items-center gap-1">
-                <span
-                  aria-hidden="true"
-                  style="width:12px;height:3px;display:inline-block;"
-                  [style.background-color]="line.color"
-                ></span>
-                {{ line.label }}
-              </span>
-            }
-          </div>
+          @if (!isEmpty()) {
+            <div class="d-flex flex-wrap gap-2 small">
+              @for (line of powerLines(); track line.label) {
+                <span class="d-inline-flex align-items-center gap-1">
+                  <span
+                    aria-hidden="true"
+                    style="width:12px;height:3px;display:inline-block;"
+                    [style.background-color]="line.color"
+                  ></span>
+                  {{ line.label }}
+                </span>
+              }
+            </div>
+          }
         </div>
 
-        <svg
-          viewBox="0 0 760 190"
-          class="w-100"
-          style="height: auto; max-height: 210px;"
-          role="img"
-          [attr.aria-label]="'Gráfico de potencia en vatios respecto al tiempo'"
-        >
-          <rect x="54" y="12" width="690" height="142" fill="none" stroke="var(--chart-grid)" />
-          <!-- Horizontal grid -->
-          <line x1="54" y1="83" x2="744" y2="83" stroke="var(--chart-grid)" stroke-dasharray="4 4" />
-          <line x1="54" y1="12" x2="744" y2="12" stroke="var(--chart-grid)" stroke-dasharray="4 4" />
+        <div class="position-relative">
+          <svg
+            viewBox="0 0 760 190"
+            class="w-100"
+            style="height: auto; max-height: 210px;"
+            role="img"
+            [attr.aria-label]="'Gráfico de potencia en vatios respecto al tiempo'"
+          >
+            <rect x="54" y="12" width="690" height="142" fill="none" stroke="var(--chart-grid)" />
+            <!-- Horizontal grid -->
+            <line x1="54" y1="83" x2="744" y2="83" stroke="var(--chart-grid)" stroke-dasharray="4 4" />
+            <line x1="54" y1="12" x2="744" y2="12" stroke="var(--chart-grid)" stroke-dasharray="4 4" />
 
-          <!-- Gaps shaded -->
-          @for (g of gapRects(); track g.x) {
-            <rect
-              [attr.x]="g.x"
-              y="12"
-              [attr.width]="g.width"
-              height="142"
-              fill="var(--warn-border)"
-              fill-opacity="0.22"
-            />
-            <text
-              [attr.x]="g.x + g.width / 2"
-              y="28"
-              text-anchor="middle"
-              font-size="13"
-              font-weight="700"
-              fill="var(--warn-text)"
-            >
-              sin datos
+            @if (!isEmpty()) {
+              <!-- Gaps shaded -->
+              @for (g of gapRects(); track g.x) {
+                <rect
+                  [attr.x]="g.x"
+                  y="12"
+                  [attr.width]="g.width"
+                  height="142"
+                  fill="var(--warn-border)"
+                  fill-opacity="0.22"
+                />
+                <text
+                  [attr.x]="g.x + g.width / 2"
+                  y="28"
+                  text-anchor="middle"
+                  font-size="13"
+                  font-weight="700"
+                  fill="var(--warn-text)"
+                >
+                  sin datos
+                </text>
+              }
+            }
+
+            <!-- Axes -->
+            <line x1="54" y1="154" x2="744" y2="154" stroke="var(--text)" stroke-width="1.5" />
+            <line x1="54" y1="12" x2="54" y2="154" stroke="var(--text)" stroke-width="1.5" />
+
+            <!-- Y labels -->
+            <text x="48" y="18" text-anchor="end" font-size="13" fill="var(--text-muted)">
+              {{ formatW(maxPower()) }}
             </text>
+            <text x="48" y="87" text-anchor="end" font-size="13" fill="var(--text-muted)">
+              {{ formatW(maxPower() / 2) }}
+            </text>
+            <text x="48" y="156" text-anchor="end" font-size="13" fill="var(--text-muted)">0 W</text>
+
+            <!-- X labels -->
+            <text x="54" y="176" font-size="13" fill="var(--text-muted)">0 s</text>
+            <text x="744" y="176" text-anchor="end" font-size="13" fill="var(--text-muted)">
+              {{ isEmpty() ? 0 : maxT() }} s
+            </text>
+
+            @if (!isEmpty()) {
+              <!-- Series polylines -->
+              @for (line of powerLines(); track line.label) {
+                <polyline
+                  fill="none"
+                  [attr.stroke]="line.color"
+                  stroke-width="2.75"
+                  stroke-linejoin="round"
+                  [attr.points]="line.pointsAttr"
+                />
+              }
+            }
+          </svg>
+
+          @if (isEmpty()) {
+            <div class="chart-empty-overlay" role="status">
+              <span class="pulso-surface-alt px-3 py-2 small fw-semibold">
+                Pulsa Iniciar ensayo para ver datos
+              </span>
+            </div>
           }
-
-          <!-- Axes -->
-          <line x1="54" y1="154" x2="744" y2="154" stroke="var(--text)" stroke-width="1.5" />
-          <line x1="54" y1="12" x2="54" y2="154" stroke="var(--text)" stroke-width="1.5" />
-
-          <!-- Y labels -->
-          <text x="48" y="18" text-anchor="end" font-size="13" fill="var(--text-muted)">
-            {{ formatW(maxPower()) }}
-          </text>
-          <text x="48" y="87" text-anchor="end" font-size="13" fill="var(--text-muted)">
-            {{ formatW(maxPower() / 2) }}
-          </text>
-          <text x="48" y="156" text-anchor="end" font-size="13" fill="var(--text-muted)">0 W</text>
-
-          <!-- X labels -->
-          <text x="54" y="176" font-size="13" fill="var(--text-muted)">0 s</text>
-          <text x="744" y="176" text-anchor="end" font-size="13" fill="var(--text-muted)">
-            {{ maxT() }} s
-          </text>
-
-          <!-- Series polylines -->
-          @for (line of powerLines(); track line.label) {
-            <polyline
-              fill="none"
-              [attr.stroke]="line.color"
-              stroke-width="2.75"
-              stroke-linejoin="round"
-              [attr.points]="line.pointsAttr"
-            />
-          }
-        </svg>
+        </div>
       </section>
 
       <!-- Energy Chart -->
@@ -116,78 +132,92 @@ interface GapRect {
           </span>
         </div>
 
-        <svg
-          viewBox="0 0 760 200"
-          class="w-100"
-          style="height: auto; max-height: 220px;"
-          role="img"
-          [attr.aria-label]="'Gráfico de energía acumulada con línea de umbral'"
-        >
-          <rect x="64" y="14" width="680" height="148" fill="none" stroke="var(--chart-grid)" />
+        <div class="position-relative">
+          <svg
+            viewBox="0 0 760 200"
+            class="w-100"
+            style="height: auto; max-height: 220px;"
+            role="img"
+            [attr.aria-label]="'Gráfico de energía acumulada con línea de umbral'"
+          >
+            <rect x="64" y="14" width="680" height="148" fill="none" stroke="var(--chart-grid)" />
 
-          <!-- Gaps shaded -->
-          @for (g of energyGapRects(); track g.x) {
-            <rect
-              [attr.x]="g.x"
-              y="14"
-              [attr.width]="g.width"
-              height="148"
-              fill="var(--warn-border)"
-              fill-opacity="0.22"
+            @if (!isEmpty()) {
+              <!-- Gaps shaded -->
+              @for (g of energyGapRects(); track g.x) {
+                <rect
+                  [attr.x]="g.x"
+                  y="14"
+                  [attr.width]="g.width"
+                  height="148"
+                  fill="var(--warn-border)"
+                  fill-opacity="0.22"
+                />
+                <text
+                  [attr.x]="g.x + g.width / 2"
+                  y="30"
+                  text-anchor="middle"
+                  font-size="13"
+                  font-weight="700"
+                  fill="var(--warn-text)"
+                >
+                  sin datos
+                </text>
+              }
+            }
+
+            <!-- Threshold horizontal line -->
+            <line
+              x1="64"
+              [attr.y1]="thresholdY()"
+              x2="744"
+              [attr.y2]="thresholdY()"
+              stroke="var(--danger-border)"
+              stroke-width="2"
+              stroke-dasharray="6 4"
             />
-            <text
-              [attr.x]="g.x + g.width / 2"
-              y="30"
-              text-anchor="middle"
-              font-size="13"
-              font-weight="700"
-              fill="var(--warn-text)"
-            >
-              sin datos
+
+            <!-- Axes -->
+            <line x1="64" y1="162" x2="744" y2="162" stroke="var(--text)" stroke-width="1.5" />
+            <line x1="64" y1="14" x2="64" y2="162" stroke="var(--text)" stroke-width="1.5" />
+
+            <!-- Y labels -->
+            <text x="58" y="20" text-anchor="end" font-size="13" fill="var(--text-muted)">
+              {{ formatEnergyAxis(maxEnergy()) }}
             </text>
+            <text x="58" y="90" text-anchor="end" font-size="13" fill="var(--text-muted)">
+              {{ formatEnergyAxis(maxEnergy() / 2) }}
+            </text>
+            <text x="58" y="164" text-anchor="end" font-size="13" fill="var(--text-muted)">0</text>
+
+            <!-- X labels -->
+            <text x="64" y="184" font-size="13" fill="var(--text-muted)">0 s</text>
+            <text x="744" y="184" text-anchor="end" font-size="13" fill="var(--text-muted)">
+              {{ isEmpty() ? 0 : maxT() }} s
+            </text>
+
+            @if (!isEmpty()) {
+              <!-- Energy lines -->
+              @for (line of energyLines(); track line.label) {
+                <polyline
+                  fill="none"
+                  [attr.stroke]="line.color"
+                  stroke-width="2.75"
+                  stroke-linejoin="round"
+                  [attr.points]="line.pointsAttr"
+                />
+              }
+            }
+          </svg>
+
+          @if (isEmpty()) {
+            <div class="chart-empty-overlay" role="status">
+              <span class="pulso-surface-alt px-3 py-2 small fw-semibold">
+                Pulsa Iniciar ensayo para ver datos
+              </span>
+            </div>
           }
-
-          <!-- Threshold horizontal line -->
-          <line
-            x1="64"
-            [attr.y1]="thresholdY()"
-            x2="744"
-            [attr.y2]="thresholdY()"
-            stroke="var(--danger-border)"
-            stroke-width="2"
-            stroke-dasharray="6 4"
-          />
-
-          <!-- Axes -->
-          <line x1="64" y1="162" x2="744" y2="162" stroke="var(--text)" stroke-width="1.5" />
-          <line x1="64" y1="14" x2="64" y2="162" stroke="var(--text)" stroke-width="1.5" />
-
-          <!-- Y labels -->
-          <text x="58" y="20" text-anchor="end" font-size="13" fill="var(--text-muted)">
-            {{ formatEnergyAxis(maxEnergy()) }}
-          </text>
-          <text x="58" y="90" text-anchor="end" font-size="13" fill="var(--text-muted)">
-            {{ formatEnergyAxis(maxEnergy() / 2) }}
-          </text>
-          <text x="58" y="164" text-anchor="end" font-size="13" fill="var(--text-muted)">0</text>
-
-          <!-- X labels -->
-          <text x="64" y="184" font-size="13" fill="var(--text-muted)">0 s</text>
-          <text x="744" y="184" text-anchor="end" font-size="13" fill="var(--text-muted)">
-            {{ maxT() }} s
-          </text>
-
-          <!-- Energy lines -->
-          @for (line of energyLines(); track line.label) {
-            <polyline
-              fill="none"
-              [attr.stroke]="line.color"
-              stroke-width="2.75"
-              stroke-linejoin="round"
-              [attr.points]="line.pointsAttr"
-            />
-          }
-        </svg>
+        </div>
       </section>
     </div>
   `,
@@ -198,8 +228,22 @@ export class EnergyChartsComponent {
   readonly zones = input.required<ZoneState[]>();
   readonly thresholdWh = input.required<number>();
   readonly siteKind = input.required<SiteKind>();
+  readonly sessionStatus = input<'running' | 'closed' | 'idle'>('running');
+  readonly elapsedS = input<number>(0);
+  readonly playing = input<boolean>(false);
 
   readonly energyUnit = computed(() => (this.siteKind() === 'venue' ? 'kWh' : 'Wh'));
+
+  readonly isEmpty = computed(() => {
+    const ptsCount = Object.values(this.series()).reduce(
+      (max, arr) => Math.max(max, arr.length),
+      0
+    );
+    if (ptsCount === 0 || this.sessionStatus() === 'idle') {
+      return true;
+    }
+    return ptsCount <= 1 && this.elapsedS() === 0 && !this.playing();
+  });
 
   readonly maxT = computed(() => {
     let max = 1;

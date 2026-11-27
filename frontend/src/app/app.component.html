@@ -1,9 +1,9 @@
 <div class="pulso-shell" [class]="themeClass()">
-  <div class="container-xxl py-3">
+  <div class="container-xxl px-2 px-sm-3 py-2 py-md-3">
     <!-- Mock navigation bar when ?mock=1 -->
     @if (store.isMockMode()) {
       <nav
-        class="pulso-surface-alt p-2 px-3 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2"
+        class="pulso-surface-alt p-2 px-3 mb-2 d-flex flex-wrap align-items-center justify-content-between gap-2"
         aria-label="Selector de prototipo navegable"
       >
         <div class="d-flex flex-wrap align-items-center gap-2">
@@ -31,7 +31,7 @@
                 [attr.aria-pressed]="store.mockBand() === b.key"
                 (click)="store.setMockBand(b.key)"
               >
-                {{ b.icon }} {{ b.label }}
+                {{ b.label }}
               </button>
             }
           </div>
@@ -45,165 +45,274 @@
 
     <!-- Main View when state is loaded -->
     @if (store.state(); as s) {
-      <!-- 1. Estado general y controles de sesión -->
-      <header class="pulso-card p-3 mb-3" aria-label="Estado general del recinto">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-          <div class="min-w-0">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-              <h1 class="h4 fw-bold mb-0 me-2">Pulso Energético</h1>
-
-              <label for="locality-select" class="visually-hidden">Localidad</label>
-              <select
-                id="locality-select"
-                class="form-select form-select-sm w-auto"
-                [ngModel]="store.selectedLocalitySlug()"
-                (ngModelChange)="onLocalityChange($event)"
-              >
-                @for (loc of store.localities(); track loc.slug) {
-                  <option [value]="loc.slug">{{ loc.name }}</option>
-                }
-              </select>
-
-              <span aria-hidden="true">›</span>
-
-              <label for="site-select" class="visually-hidden">Recinto</label>
-              <select
-                id="site-select"
-                class="form-select form-select-sm w-auto"
-                [ngModel]="store.selectedSiteSlug()"
-                (ngModelChange)="onSiteChange($event)"
-              >
-                @for (site of store.availableSitesForLocality(); track site.slug) {
-                  <option [value]="site.slug">{{ site.name }}</option>
-                }
-              </select>
-
-              <span class="badge-sim">{{ s.data_label }}</span>
-            </div>
+      <!-- 1. Compact Header (<= 2 lines on 390px) -->
+      <header class="pulso-card pulso-header p-2 px-md-3 mb-3" aria-label="Estado general del recinto">
+        <div class="header-row-top">
+          <div class="header-brand-group">
+            <h1 class="header-title fw-bold mb-0">Pulso Energético</h1>
+            <span class="badge-sim">{{ s.data_label }}</span>
           </div>
 
-          <div class="d-flex flex-column align-items-sm-end gap-2">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-              <span class="pulso-surface-alt px-2 py-1 small fw-bold tabular-nums">
-                {{ s.session.band === 'day' ? '☀' : s.session.band === 'afternoon' ? '🌇' : '🌙' }}
-                {{ s.session.band_label }} · {{ s.session.scenario_clock }}
-              </span>
-              <span class="pulso-surface-alt px-2 py-1 small fw-bold tabular-nums">
-                Ensayo: {{ s.session.elapsed_s }} s
-              </span>
-              <span class="pulso-surface-alt px-2 py-1 small fw-bold">
-                Estado: {{ sessionStatusText(s) }}
-              </span>
-
-              @if (store.auth().authenticated) {
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-outline"
-                  (click)="store.logout()"
-                >
-                  {{ store.auth().username }} (Salir)
-                </button>
-              } @else {
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-outline"
-                  (click)="showLogin.set(!showLogin())"
-                >
-                  Iniciar sesión
-                </button>
-              }
-            </div>
-
-            <!-- Session playback controls (Operator only) -->
+          <div class="header-actions-group">
             @if (store.canOperate()) {
-              <div class="d-flex flex-wrap align-items-center gap-2">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-outline"
-                  (click)="store.startSession()"
-                >
-                  Iniciar ensayo
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-primary"
-                  [disabled]="s.session.playing || s.session.status === 'idle'"
-                  (click)="store.play()"
-                >
-                  ▶ Reproducir
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-outline"
-                  [disabled]="!s.session.playing"
-                  (click)="store.pause()"
-                >
-                  ⏸ Pausar
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-outline"
-                  (click)="store.nextBand()"
-                >
-                  ⏭ Siguiente franja
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-outline"
-                  (click)="store.toggleConnection()"
-                >
-                  {{ s.session.connected ? 'Simular corte' : 'Reconectar' }}
-                </button>
-              </div>
-            } @else if (store.auth().authenticated) {
-              <div class="band-warn py-1 px-2 mb-0 small" role="status">
-                👁 Solo lectura: tu usuario no opera este recinto.
-                Entra como <strong>{{ s.locality.slug === 'puente-alto' ? 'operador_puente' : 'operador_cuenca' }}</strong>
-                u <strong>operador_demo</strong> para encender, apagar o iniciar ensayos.
-              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-pulso-primary header-primary-btn"
+                (click)="onPrimaryHeaderAction()"
+              >
+                {{ primaryStepLabel() }}
+              </button>
             }
+            <button
+              #menuToggleBtn
+              type="button"
+              class="btn btn-sm btn-pulso-outline header-menu-btn"
+              aria-label="Menú"
+              [attr.aria-expanded]="menuOpen()"
+              aria-controls="pulso-nav-menu"
+              (click)="toggleMenu()"
+            >
+              ☰
+            </button>
           </div>
         </div>
 
-        <!-- Inline login panel -->
-        @if (showLogin()) {
-          <form
-            class="pulso-surface-alt p-3 mt-3 d-flex flex-wrap align-items-end gap-2"
-            (ngSubmit)="onLoginSubmit()"
-          >
-            <div>
-              <label for="login-user" class="form-label small fw-bold mb-1">Usuario</label>
-              <input
-                id="login-user"
-                type="text"
-                class="form-control form-control-sm"
-                [(ngModel)]="loginUsername"
-                name="username"
-                placeholder="operador_cuenca / observador"
-                required
-              />
-            </div>
-            <div>
-              <label for="login-pass" class="form-label small fw-bold mb-1">Contraseña</label>
-              <input
-                id="login-pass"
-                type="password"
-                class="form-control form-control-sm"
-                [(ngModel)]="loginPassword"
-                name="password"
-              />
-            </div>
-            <button type="submit" class="btn btn-sm btn-pulso-primary">Entrar</button>
+        <div class="header-row-meta">
+          <div class="header-selectors">
+            <label for="locality-select" class="visually-hidden">Localidad</label>
+            <select
+              id="locality-select"
+              class="form-select form-select-sm header-select-loc"
+              [ngModel]="store.selectedLocalitySlug()"
+              (ngModelChange)="onLocalityChange($event)"
+            >
+              @for (loc of store.localities(); track loc.slug) {
+                <option [value]="loc.slug">{{ loc.name }}</option>
+              }
+            </select>
+
+            <span aria-hidden="true">›</span>
+
+            <label for="site-select" class="visually-hidden">Recinto</label>
+            <select
+              id="site-select"
+              class="form-select form-select-sm header-select-site"
+              [ngModel]="store.selectedSiteSlug()"
+              (ngModelChange)="onSiteChange($event)"
+            >
+              @for (site of store.availableSitesForLocality(); track site.slug) {
+                <option [value]="site.slug">{{ site.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="header-clock tabular-nums">
+            <span class="pulso-surface-alt px-2 py-1 small fw-bold d-inline-block text-nowrap">
+              {{ s.session.band_label }} · {{ s.session.scenario_clock }} ·
+              @if (s.site.kind === 'venue') {
+                ×{{ s.session.speed }}<span class="d-none d-sm-inline"> · {{ speedScaleDetail(s) }}</span>
+              } @else {
+                Tiempo real (×{{ s.session.speed }})
+              }
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hamburger Drawer Menu (Right Offcanvas) -->
+      @if (menuOpen()) {
+        <div
+          class="pulso-drawer-backdrop"
+          aria-hidden="true"
+          (click)="closeMenu(true)"
+        ></div>
+        <aside
+          #menuDrawer
+          id="pulso-nav-menu"
+          class="pulso-drawer pulso-card"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú de acciones"
+        >
+          <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
+            <h2 class="h6 fw-bold mb-0">Menú</h2>
             <button
               type="button"
               class="btn btn-sm btn-pulso-outline"
-              (click)="showLogin.set(false)"
+              aria-label="Cerrar menú"
+              (click)="closeMenu(true)"
             >
-              Cancelar
+              Cerrar
             </button>
-          </form>
-        }
-      </header>
+          </div>
+
+          <div class="pulso-surface-alt p-2 px-3 mb-3 small">
+            <div class="pulso-muted">Usuario actual</div>
+            <div class="fw-bold">
+              {{ store.auth().authenticated ? store.auth().username : 'Sin sesión' }}
+              ({{ store.auth().role === 'operator' ? 'Operador' : 'Observador' }})
+            </div>
+            <div class="pulso-muted mt-1 tabular-nums">
+              Ensayo: {{ roundSeconds(s.session.elapsed_s) }} s · {{ sessionStatusText(s) }}
+            </div>
+          </div>
+
+          <div class="d-flex flex-column gap-2">
+            @if (store.canOperate()) {
+              <button
+                type="button"
+                class="btn btn-pulso-outline w-100 justify-content-start"
+                (click)="onMenuAction('start')"
+              >
+                Iniciar ensayo
+              </button>
+              <button
+                type="button"
+                class="btn btn-pulso-outline w-100 justify-content-start"
+                (click)="onMenuAction('nextBand')"
+              >
+                Siguiente franja
+              </button>
+              <button
+                type="button"
+                class="btn btn-pulso-outline w-100 justify-content-start"
+                [disabled]="!s.session.playing"
+                (click)="onMenuAction('pause')"
+              >
+                Pausar
+              </button>
+              <button
+                type="button"
+                class="btn btn-pulso-outline w-100 justify-content-start"
+                (click)="onMenuAction('connection')"
+              >
+                {{ s.session.connected ? 'Demo: simular corte de conexión' : 'Reconectar' }}
+              </button>
+              @if (s.site.kind === 'venue') {
+                <button
+                  type="button"
+                  class="btn btn-pulso-primary w-100 justify-content-start"
+                  (click)="onMenuAction('presentation')"
+                >
+                  Modo presentación
+                </button>
+              }
+            }
+
+            <button
+              type="button"
+              class="btn btn-pulso-outline w-100 justify-content-start"
+              [attr.aria-pressed]="audio.soundEnabled()"
+              (click)="toggleSound()"
+            >
+              {{ audio.soundEnabled() ? 'Silenciar sonido' : 'Activar sonido (opcional)' }}
+            </button>
+
+            @if (store.auth().authenticated) {
+              <button
+                type="button"
+                class="btn btn-pulso-outline w-100 justify-content-start mt-2"
+                (click)="onMenuAction('logout')"
+              >
+                Salir
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-pulso-primary w-100 justify-content-start mt-2"
+                (click)="onMenuAction('login')"
+              >
+                Iniciar sesión
+              </button>
+            }
+          </div>
+        </aside>
+      }
+
+      <!-- Inline login panel (if triggered from mock mode) -->
+      @if (showLogin()) {
+        <form
+          class="pulso-card p-3 mb-3 d-flex flex-wrap align-items-end gap-2"
+          (ngSubmit)="onLoginSubmit()"
+        >
+          <div>
+            <label for="login-user" class="form-label small fw-bold mb-1">Usuario</label>
+            <input
+              id="login-user"
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="loginUsername"
+              name="username"
+              placeholder="operador_cuenca / observador"
+              required
+            />
+          </div>
+          <div>
+            <label for="login-pass" class="form-label small fw-bold mb-1">Contraseña</label>
+            <input
+              id="login-pass"
+              type="password"
+              class="form-control form-control-sm"
+              [(ngModel)]="loginPassword"
+              name="password"
+            />
+          </div>
+          <button type="submit" class="btn btn-sm btn-pulso-primary">Entrar</button>
+          @if (isLocalDemoHost) {
+            <button
+              type="button"
+              class="btn btn-sm btn-pulso-outline"
+              (click)="loginAsDemoOperator()"
+            >
+              Entrar como operador demo
+            </button>
+          }
+          <button
+            type="button"
+            class="btn btn-sm btn-pulso-outline"
+            (click)="showLogin.set(false)"
+          >
+            Cancelar
+          </button>
+        </form>
+      }
+
+      <!-- Read-only notice for non-operator authenticated users -->
+      @if (!store.canOperate() && store.auth().authenticated) {
+        <div class="band-warn py-2 px-3 mb-3 small" role="status">
+          Solo lectura: tu usuario no opera este recinto.
+          Entra como <strong>{{ s.locality.slug === 'puente-alto' ? 'operador_puente' : 'operador_cuenca' }}</strong>
+          u <strong>operador_demo</strong> para encender, apagar o iniciar ensayos.
+        </div>
+      }
+
+      <!-- Step 1-2-3 Guide Strip on Initial Screen (Operator, outside Presentation Mode) -->
+      @if (store.canOperate() && !store.presentationActive() && guideStep() !== 'done') {
+        <div
+          class="pulso-surface-alt p-2 px-3 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2 small"
+          aria-label="Guía de pasos del ensayo"
+        >
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="fw-bold">Guía:</span>
+            <span [class.fw-bold]="guideStep() === 1" [class.pulso-muted]="guideStep() !== 1">
+              @if (guideStep() !== 1) { ✓ } 1 Iniciar ensayo
+            </span>
+            <span aria-hidden="true" class="pulso-muted">·</span>
+            <span [class.fw-bold]="guideStep() === 2" [class.pulso-muted]="guideStep() !== 2">
+              @if (guideStep() === 3) { ✓ } 2 Encender
+            </span>
+            <span aria-hidden="true" class="pulso-muted">·</span>
+            <span [class.fw-bold]="guideStep() === 3" [class.pulso-muted]="guideStep() !== 3">
+              3 Reproducir
+            </span>
+          </div>
+          @if (s.site.kind === 'venue') {
+            <span class="pulso-muted d-sm-none tabular-nums">
+              {{ speedScaleDetail(s) }}
+            </span>
+          }
+        </div>
+      }
 
       @if (store.actionFeedback(); as feedback) {
         <div
@@ -228,275 +337,497 @@
         </div>
       }
 
-      <!-- Main Workspace Grid (Mobile: estado [header] -> control -> alerta -> cifras -> graficos) -->
-      <main class="workspace-grid">
-        <!-- 2. Controls / Zones -->
-        <section class="area-controls d-flex flex-column gap-3" aria-label="Zonas y controles">
-          @for (zone of s.zones; track zone.slug) {
-            <article class="pulso-card p-3">
-              <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
-                <div class="d-flex align-items-center gap-2">
-                  <span
-                    class="led-dot"
-                    [class.led-green]="zone.indicator.led === 'green'"
-                    [class.led-off]="zone.indicator.led === 'off'"
-                    [class.led-amber]="zone.indicator.led === 'amber'"
-                    [class.led-red]="zone.indicator.led === 'red'"
-                    aria-hidden="true"
-                  ></span>
-                  <div>
-                    <h2 class="h6 fw-bold mb-0">{{ zone.name }}</h2>
-                    <div class="small pulso-muted">
-                      {{ zone.on ? '💡' : '○' }} {{ zone.indicator.label }}
-                    </div>
-                  </div>
-                </div>
+      <!-- Restore budget prompt after exiting Presentation Mode -->
+      @if (
+        !store.presentationActive() &&
+        store.presentationRestorePromptSite() === s.site.slug &&
+        store.canOperate() &&
+        s.site.kind === 'venue'
+      ) {
+        <div
+          class="pulso-surface-alt p-3 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2"
+          role="status"
+        >
+          <span class="small fw-semibold">
+            Modo presentación pausado (presupuesto actual:
+            {{ fmtDecimal(s.site.budget_kwh_day ?? 0.1, 2) }} kWh).
+          </span>
+          <div class="d-flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-pulso-primary"
+              (click)="store.restoreDefaultBudget(s.site.slug)"
+            >
+              Restaurar presupuesto a 0,60 kWh
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-pulso-outline"
+              (click)="store.dismissRestorePrompt()"
+            >
+              Mantener
+            </button>
+          </div>
+        </div>
+      }
 
-                @if (zone.simulated_control && zone.dimmable) {
-                  <span class="badge-pulso-secondary">control simulado</span>
+      <!-- Guided Presentation Mode Panel (Operator on Venue only) -->
+      @if (store.presentationActive() && store.canOperate() && s.site.kind === 'venue') {
+        <section
+          class="pulso-card presentation-panel p-3 p-md-4 mb-3"
+          aria-label="Modo presentación guiado"
+        >
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <span class="badge-sim">Modo presentación</span>
+              <span class="badge-pulso-secondary tabular-nums">
+                Presupuesto de demostración: 0,10 kWh
+              </span>
+              <span class="badge-pulso-secondary">
+                @if (store.presentationStep() === 0) {
+                  Preparado · Paso 1 de 3
+                } @else if (store.presentationStep() === 1) {
+                  Paso 1 de 3 · Día
+                } @else if (store.presentationStep() === 2) {
+                  Paso 2 de 3 · Tarde
+                } @else {
+                  Paso 3 de 3 · Noche
                 }
-              </div>
+              </span>
+            </div>
 
-              @if (store.canOperate()) {
+            <div class="d-flex flex-wrap gap-2">
+              @if (s.site.budget_kwh_day !== null && s.site.budget_kwh_day !== 0.6) {
                 <button
                   type="button"
-                  class="btn w-100 mb-3"
-                  [class.btn-pulso-primary]="zone.on"
-                  [class.btn-pulso-outline]="!zone.on"
-                  [attr.aria-pressed]="zone.on"
-                  (click)="store.toggleZone(zone.slug)"
+                  class="btn btn-sm btn-pulso-outline"
+                  [disabled]="store.presentationBusy()"
+                  (click)="store.restoreDefaultBudget(s.site.slug)"
                 >
-                  {{ zone.on ? 'ENCENDIDA ⏻ (Apagar)' : 'APAGADA ⏻ (Encender)' }}
+                  Restaurar presupuesto a 0,60 kWh
                 </button>
-
-                <!-- Bench current knob 0 - 0.80 A -->
-                @if (zone.kind === 'dc_load' && zone.max_current_a !== null) {
-                  <div class="pulso-surface-alt p-2 mb-2">
-                    <div class="d-flex justify-content-between align-items-baseline gap-2 small fw-bold mb-1">
-                      <label [for]="'knob-' + zone.slug">Perilla de corriente (A)</label>
-                      <span class="tabular-nums text-end text-nowrap">
-                        {{ fmtCurrent(store.getBenchKnobCurrent(zone)) }}
-                        @if (!zone.on) {
-                          <span class="fw-normal pulso-muted"> · preajuste</span>
-                        }
-                      </span>
-                    </div>
-                    <input
-                      [id]="'knob-' + zone.slug"
-                      type="range"
-                      class="form-range"
-                      min="0"
-                      [max]="zone.max_current_a"
-                      step="0.01"
-                      [value]="store.getBenchKnobCurrent(zone)"
-                      [attr.aria-valuemin]="0"
-                      [attr.aria-valuemax]="zone.max_current_a"
-                      [attr.aria-valuenow]="store.getBenchKnobCurrent(zone)"
-                      [attr.aria-valuetext]="benchKnobAriaText(zone)"
-                      [attr.aria-describedby]="'knob-scale-' + zone.slug"
-                      (input)="onBenchCurrentInput(zone.slug, $event)"
-                      (change)="onBenchCurrentChange(zone.slug, $event)"
-                    />
-                    <div
-                      [id]="'knob-scale-' + zone.slug"
-                      class="d-flex justify-content-between small pulso-muted tabular-nums"
-                    >
-                      <span>0,00 A</span>
-                      <span>0,40 A (2,00 W)</span>
-                      <span>{{ fmtCurrent(zone.max_current_a) }}</span>
-                    </div>
-                  </div>
-                }
-
-                <!-- Venue dimmable intensity 0 - 100 % -->
-                @if (zone.dimmable && zone.intensity_pct !== null) {
-                  <div class="pulso-surface-alt p-2 mb-2">
-                    <div class="d-flex justify-content-between align-items-baseline gap-2 small fw-bold mb-1">
-                      <label [for]="'dim-' + zone.slug">Intensidad (control simulado)</label>
-                      <span class="tabular-nums text-end text-nowrap">
-                        {{ zone.intensity_pct }} %
-                        @if (!zone.on) {
-                          <span class="fw-normal pulso-muted"> · preajuste</span>
-                        }
-                      </span>
-                    </div>
-                    <input
-                      [id]="'dim-' + zone.slug"
-                      type="range"
-                      class="form-range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      [value]="zone.intensity_pct"
-                      [attr.aria-valuemin]="0"
-                      [attr.aria-valuemax]="100"
-                      [attr.aria-valuenow]="zone.intensity_pct"
-                      [attr.aria-valuetext]="intensityAriaText(zone)"
-                      [attr.aria-describedby]="'dim-scale-' + zone.slug"
-                      (input)="onIntensityInput(zone.slug, $event)"
-                      (change)="onIntensityChange(zone.slug, $event)"
-                    />
-                    <div
-                      [id]="'dim-scale-' + zone.slug"
-                      class="d-flex justify-content-between small pulso-muted tabular-nums"
-                    >
-                      <span>0 %</span>
-                      <span>50 %</span>
-                      <span>100 %</span>
-                    </div>
-                  </div>
-                }
               }
+            </div>
+          </div>
 
-              <div class="d-flex justify-content-between flex-wrap gap-1 small pulso-muted tabular-nums pt-2 border-top">
-                <span>
-                  {{ fmtVoltage(zone.voltage_v) }} ·
-                  @if (zone.kind === 'dc_load') {
-                    {{ fmtCurrent(zone.current_a) }} ·
-                  }
-                  {{ fmtPower(zone.power_w) }}
-                </span>
-                <span>{{ fmtEnergy(zone.energy_wh, s.site.kind) }} · {{ zone.on_seconds }} s encendida</span>
+          @if (store.presentationStep() === 0) {
+            <h2 class="h4 fw-bold mb-2">
+              Paso 1, Día: «El encargado abre la sede y enciende la iluminación»
+            </h2>
+            <p class="fs-5 mb-3">
+              Pulsa <strong>Siguiente paso</strong> para iniciar un ensayo nuevo con presupuesto de
+              demostración de 0,10 kWh, encender el salón y la sala de reuniones (240,00 W) y
+              comenzar la reproducción a escala ×60.
+            </p>
+          } @else if (store.presentationStep() === 1) {
+            <h2 class="h4 fw-bold mb-2">
+              Paso 1, Día: «El encargado abre la sede y enciende la iluminación»
+            </h2>
+            <p class="fs-5 mb-3">
+              Salón principal y sala de reuniones encendidos ({{ fmtPower(s.session.total_power_w) }}).
+              Acumulado: <strong>{{ fmtEnergy(s.session.energy_wh, 'venue') }}</strong> de
+              {{ fmtEnergy(s.session.threshold_wh, 'venue') }}. Pulsa <strong>Siguiente paso</strong>
+              cuando termine la reunión para pasar a la tarde y apagar la sala vacía.
+            </p>
+          } @else if (store.presentationStep() === 2) {
+            <h2 class="h4 fw-bold mb-2">
+              Paso 2, Tarde: «Termina la reunión: apaga la sala vacía»
+            </h2>
+            <p class="fs-5 mb-3">
+              La sala de reuniones quedó apagada y la potencia bajó de
+              <strong>240,00 W a 160,00 W</strong> (actual:
+              <strong>{{ fmtPower(s.session.total_power_w) }}</strong>). El salón principal sigue
+              iluminado. Pulsa <strong>Siguiente paso</strong> para avanzar a la noche y observar la
+              alerta de presupuesto.
+            </p>
+          } @else {
+            <h2 class="h4 fw-bold mb-2">
+              Paso 3, Noche: «Se alcanza el presupuesto»
+            </h2>
+            <p class="fs-5 mb-3">
+              Al llegar al presupuesto de demostración (0,10 kWh), el sistema emite una sola alerta
+              visual persistente (y aviso sonoro opcional si se habilitó el audio), manteniendo los
+              acumulados por zona sin interrumpir el registro.
+            </p>
+
+            @if (!s.session.alert_fired) {
+              <div class="pulso-surface-alt p-3 mb-3 fs-6 fw-semibold tabular-nums" role="status">
+                Esperando alerta de presupuesto… acumulado
+                {{ fmtEnergy(s.session.energy_wh, 'venue') }} de
+                {{ fmtEnergy(s.session.threshold_wh, 'venue') }} · restante
+                {{ fmtEnergy(s.session.remaining_wh, 'venue') }}
+                @if (s.session.time_to_threshold_s !== null && s.session.total_power_w > 0) {
+                  (≈ {{ fmtDuration(s.session.time_to_threshold_s) }} simulados)
+                }
               </div>
-            </article>
-          }
-        </section>
+            } @else {
+              <div class="band-danger p-3 mb-3" role="status">
+                <div class="fw-bold fs-5 mb-1">
+                  Resumen del ensayo · Presupuesto alcanzado ({{ fmtEnergy(s.session.energy_wh, 'venue') }})
+                </div>
+                <div class="small fw-semibold mb-1 tabular-nums">
+                  Tiempo simulado: {{ fmtDuration(s.session.elapsed_s) }} ·
+                  Umbral: {{ fmtEnergy(s.session.threshold_wh, 'venue') }} ·
+                  Potencia actual: {{ fmtPower(s.session.total_power_w) }}
+                  @if (store.presentationAlertElapsedMs(); as realMs) {
+                    · Tiempo real medido: {{ fmtDecimal(realMs / 1000, 1) }} s
+                  }
+                </div>
+                @if (store.sessionReport(); as rep) {
+                  <div class="small mb-0">{{ rep.text }}</div>
+                }
+              </div>
 
-        <!-- 3. Persistent Alert Band (Visual always clear even when audio is muted) -->
-        <section class="area-alerts d-flex flex-column gap-3" aria-label="Alertas">
-          <div class="pulso-card p-3">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-              <h2 class="h6 fw-bold mb-0">Alertas</h2>
+              @if (store.comparison(); as cmp) {
+                <div class="pulso-surface-alt p-3 mb-3" aria-label="Tarjeta de ahorro en presentación">
+                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <span class="small fw-bold text-uppercase pulso-muted">Ahorro estimado</span>
+                    <span class="badge-pulso-secondary">Estimación simulada</span>
+                  </div>
+                  <div class="fs-4 fw-bold mb-2">
+                    Apagar la sala vacía al terminar la reunión ahorra
+                    {{ fmtEnergy(cmp.difference_wh, 'venue') }} por jornada
+                  </div>
+                  <div class="d-flex flex-wrap gap-3 small fw-semibold tabular-nums">
+                    <span>
+                      Sala encendida {{ fmtEnergy(comparisonRunEnergy(cmp, 'A'), 'venue') }} vs.
+                      Sala apagada {{ fmtEnergy(comparisonRunEnergy(cmp, 'B'), 'venue') }}
+                    </span>
+                    <span class="pulso-muted">
+                      Salón iluminado: {{ fmtDuration(cmp.salon_on_seconds) }}
+                    </span>
+                  </div>
+                </div>
+              }
+            }
+          }
+
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            @if (store.presentationStep() < 3) {
               <button
                 type="button"
-                class="btn btn-sm"
-                [class.btn-pulso-primary]="audio.soundEnabled()"
-                [class.btn-pulso-outline]="!audio.soundEnabled()"
-                [attr.aria-pressed]="audio.soundEnabled()"
-                (click)="toggleSound()"
+                class="btn btn-pulso-primary"
+                [disabled]="store.presentationBusy()"
+                (click)="store.advancePresentationStep()"
               >
-                {{ audio.soundEnabled() ? '🔊 Sonido activo' : '🔇 Audio silenciado (activar opcional)' }}
+                {{ store.presentationBusy() ? 'Ejecutando…' : 'Siguiente paso' }}
               </button>
-            </div>
+            }
+            <button
+              type="button"
+              class="btn btn-pulso-outline"
+              [disabled]="store.presentationBusy()"
+              (click)="store.exitPresentationMode()"
+            >
+              Salir
+            </button>
+          </div>
+        </section>
+      }
 
-            <div aria-live="assertive" aria-atomic="true">
-              @if (s.alerts.length > 0 || s.session.alert_fired) {
-                <div class="band-danger p-3 mb-2" role="alert">
-                  <div class="fw-bold mb-1">
-                    ⚠ UMBRAL ALCANZADO: {{ fmtEnergy(s.session.threshold_wh, s.site.kind) }}
+      <!-- Main Workspace Grid:
+           Desktop (>=992px): 2 independent columns (Left: zonas + alertas, Right: cifras + graficos)
+           Mobile (<992px): estado (header) -> control -> alerta -> cifras -> graficos -->
+      <main class="workspace-grid">
+        <div class="workspace-col-left d-flex flex-column gap-3">
+          <!-- 2. Controls / Zones -->
+          <section class="area-controls d-flex flex-column gap-3" aria-label="Zonas y controles">
+            @for (zone of s.zones; track zone.slug) {
+              <article class="pulso-card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="led-dot"
+                      [class.led-green]="zone.indicator.led === 'green'"
+                      [class.led-off]="zone.indicator.led === 'off'"
+                      [class.led-amber]="zone.indicator.led === 'amber'"
+                      [class.led-red]="zone.indicator.led === 'red'"
+                      aria-hidden="true"
+                    ></span>
+                    <div>
+                      <h2 class="h6 fw-bold mb-0">{{ zone.name }}</h2>
+                      <div class="small pulso-muted">{{ zone.indicator.label }}</div>
+                    </div>
                   </div>
-                  <div class="small fw-semibold mb-1">
-                    @if (audio.soundEnabled()) {
-                      Aviso visual y sonoro activo (timbre del navegador, 0,8 s).
-                    } @else {
-                      Aviso visual activo en pantalla (el audio está silenciado; el sonido es opcional).
-                    }
-                  </div>
-                  @for (al of s.alerts; track al.id) {
-                    <div class="small mb-1">{{ al.message }}</div>
-                    @if (store.canOperate() && !al.acknowledged) {
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-light mt-2 fw-bold"
-                        (click)="store.ackAlert(al.id)"
+
+                  @if (zone.simulated_control && zone.dimmable) {
+                    <span class="badge-pulso-secondary">control simulado</span>
+                  }
+                </div>
+
+                @if (store.canOperate()) {
+                  <button
+                    type="button"
+                    class="btn w-100 mb-3"
+                    [class.btn-pulso-primary]="zone.on || guideStep() === 2"
+                    [class.btn-pulso-outline]="!zone.on && guideStep() !== 2"
+                    [attr.aria-pressed]="zone.on"
+                    (click)="store.toggleZone(zone.slug)"
+                  >
+                    {{ zone.on ? 'ENCENDIDA (Apagar)' : 'APAGADA (Encender)' }}
+                  </button>
+
+                  <!-- Bench current knob 0 - 0.80 A -->
+                  @if (zone.kind === 'dc_load' && zone.max_current_a !== null) {
+                    <div class="pulso-surface-alt p-2 mb-2">
+                      <div class="d-flex justify-content-between align-items-baseline gap-2 small fw-bold mb-1">
+                        <label [for]="'knob-' + zone.slug">Perilla de corriente (A)</label>
+                        <span class="tabular-nums text-end text-nowrap">
+                          {{ fmtCurrent(store.getBenchKnobCurrent(zone)) }}
+                          @if (!zone.on) {
+                            <span class="fw-normal pulso-muted"> · preajuste</span>
+                          }
+                        </span>
+                      </div>
+                      <input
+                        [id]="'knob-' + zone.slug"
+                        type="range"
+                        class="form-range"
+                        min="0"
+                        [max]="zone.max_current_a"
+                        step="0.01"
+                        [value]="store.getBenchKnobCurrent(zone)"
+                        [attr.aria-valuemin]="0"
+                        [attr.aria-valuemax]="zone.max_current_a"
+                        [attr.aria-valuenow]="store.getBenchKnobCurrent(zone)"
+                        [attr.aria-valuetext]="benchKnobAriaText(zone)"
+                        [attr.aria-describedby]="'knob-scale-' + zone.slug"
+                        (input)="onBenchCurrentInput(zone.slug, $event)"
+                        (change)="onBenchCurrentChange(zone.slug, $event)"
+                      />
+                      <div
+                        [id]="'knob-scale-' + zone.slug"
+                        class="d-flex justify-content-between small pulso-muted tabular-nums"
                       >
-                        Reconocer alerta
-                      </button>
+                        <span>0,00 A</span>
+                        <span>0,40 A (2,00 W)</span>
+                        <span>{{ fmtCurrent(zone.max_current_a) }}</span>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Venue dimmable intensity 0 - 100 % -->
+                  @if (zone.dimmable && zone.intensity_pct !== null) {
+                    <div class="pulso-surface-alt p-2 mb-2">
+                      <div class="d-flex justify-content-between align-items-baseline gap-2 small fw-bold mb-1">
+                        <label [for]="'dim-' + zone.slug">Intensidad (control simulado)</label>
+                        <span class="tabular-nums text-end text-nowrap">
+                          {{ zone.intensity_pct }} %
+                          @if (!zone.on) {
+                            <span class="fw-normal pulso-muted"> · preajuste</span>
+                          }
+                        </span>
+                      </div>
+                      <input
+                        [id]="'dim-' + zone.slug"
+                        type="range"
+                        class="form-range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        [value]="zone.intensity_pct"
+                        [attr.aria-valuemin]="0"
+                        [attr.aria-valuemax]="100"
+                        [attr.aria-valuenow]="zone.intensity_pct"
+                        [attr.aria-valuetext]="intensityAriaText(zone)"
+                        [attr.aria-describedby]="'dim-scale-' + zone.slug"
+                        (input)="onIntensityInput(zone.slug, $event)"
+                        (change)="onIntensityChange(zone.slug, $event)"
+                      />
+                      <div
+                        [id]="'dim-scale-' + zone.slug"
+                        class="d-flex justify-content-between small pulso-muted tabular-nums"
+                      >
+                        <span>0 %</span>
+                        <span>50 %</span>
+                        <span>100 %</span>
+                      </div>
+                    </div>
+                  }
+                }
+
+                <div class="d-flex justify-content-between flex-wrap gap-1 small pulso-muted tabular-nums pt-2 border-top">
+                  <span>
+                    {{ fmtVoltage(zone.voltage_v) }} ·
+                    @if (zone.kind === 'dc_load') {
+                      {{ fmtCurrent(zone.current_a) }} ·
                     }
-                  }
+                    {{ fmtPower(zone.power_w) }}
+                  </span>
+                  <span>
+                    {{ fmtEnergy(zone.energy_wh, s.site.kind) }} · encendida {{ roundSeconds(zone.on_seconds) }} s
+                  </span>
                 </div>
-              } @else {
-                <div class="pulso-surface-alt p-2 small pulso-muted" role="status">
-                  Sin alertas activas · El aviso de umbral aparecerá aquí aunque el audio esté silenciado.
-                </div>
-              }
-            </div>
+              </article>
+            }
+          </section>
 
-            <div aria-live="polite" aria-atomic="true">
-              @if (!s.session.connected || s.gaps.length > 0) {
-                <div class="band-warn p-2 small fw-semibold mt-2" role="status">
-                  @if (store.totalGapSeconds() === 0) {
-                    ⚠ Conexión interrumpida · sin datos (en curso)
-                  } @else if (!s.session.connected) {
-                    ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s (en curso)
-                  } @else {
-                    ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        </section>
+          <!-- 3. Persistent Alert Band (NEVER inside menu; visual always clear even when audio is muted) -->
+          <section class="area-alerts d-flex flex-column gap-3" aria-label="Alertas">
+            <div class="pulso-card p-3">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <h2 class="h6 fw-bold mb-0">Alertas</h2>
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-pulso-primary]="audio.soundEnabled()"
+                  [class.btn-pulso-outline]="!audio.soundEnabled()"
+                  [attr.aria-pressed]="audio.soundEnabled()"
+                  (click)="toggleSound()"
+                >
+                  {{ audio.soundEnabled() ? 'Sonido activo' : 'Activar sonido (opcional)' }}
+                </button>
+              </div>
 
-        <!-- 4. Three Key Metrics -->
-        <section class="area-metrics" aria-label="Tres cifras clave">
-          <div class="row g-3">
-            <div class="col-12 col-md-4">
-              <div class="pulso-card p-3 h-100" aria-live="polite" aria-atomic="true">
-                <div class="small fw-bold text-uppercase pulso-muted">Potencia actual</div>
-                <div class="metric-value tabular-nums my-1">
-                  {{ fmtPower(s.session.total_power_w) }}
-                </div>
-                <div class="small pulso-muted">{{ sessionStatusText(s) }}</div>
+              <div aria-live="assertive" aria-atomic="true">
+                @if (s.alerts.length > 0 || s.session.alert_fired) {
+                  <div class="band-danger p-3 mb-2" role="alert">
+                    <div class="fw-bold mb-1">
+                      ⚠ UMBRAL ALCANZADO: {{ fmtEnergy(s.session.threshold_wh, s.site.kind) }}
+                    </div>
+                    <div class="small fw-semibold mb-1">
+                      @if (audio.soundEnabled()) {
+                        Aviso visual y sonoro activo (timbre del navegador, 0,8 s).
+                      } @else {
+                        Aviso visual activo en pantalla (el audio está silenciado; el sonido es opcional).
+                      }
+                    </div>
+                    @for (al of s.alerts; track al.id) {
+                      <div class="small mb-1">{{ al.message }}</div>
+                      @if (store.canOperate() && !al.acknowledged) {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-light mt-2 fw-bold"
+                          (click)="store.ackAlert(al.id)"
+                        >
+                          Reconocer alerta
+                        </button>
+                      }
+                    }
+                  </div>
+                } @else {
+                  <div class="pulso-surface-alt p-2 small pulso-muted" role="status">
+                    Sin alertas activas · El aviso de umbral aparecerá aquí aunque el audio esté silenciado.
+                  </div>
+                }
+              </div>
+
+              <div aria-live="polite" aria-atomic="true">
+                @if (!s.session.connected || s.gaps.length > 0) {
+                  <div class="band-warn p-2 small fw-semibold mt-2" role="status">
+                    @if (store.totalGapSeconds() === 0) {
+                      ⚠ Conexión interrumpida · sin datos (en curso)
+                    } @else if (!s.session.connected) {
+                      ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s (en curso)
+                    } @else {
+                      ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() }} s
+                    }
+                  </div>
+                }
               </div>
             </div>
+          </section>
+        </div>
 
-            <div class="col-12 col-md-4">
-              <div
-                class="pulso-card p-3 h-100"
-                [class.metric-alert-border]="s.session.alert_fired"
-                aria-live="polite"
-                aria-atomic="true"
-              >
-                <div class="small fw-bold text-uppercase pulso-muted">Energía acumulada</div>
-                <div class="metric-value tabular-nums my-1">
-                  {{ fmtEnergy(s.session.energy_wh, s.site.kind) }}
+        <div class="workspace-col-right d-flex flex-column gap-3">
+          <!-- 4. Three Key Metrics -->
+          <section class="area-metrics" aria-label="Tres cifras clave">
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <div class="pulso-card p-3 h-100" aria-live="polite" aria-atomic="true">
+                  <div class="small fw-bold text-uppercase pulso-muted">Potencia actual</div>
+                  <div class="metric-value tabular-nums my-1">
+                    {{ fmtPower(s.session.total_power_w) }}
+                  </div>
+                  <div class="small pulso-muted">{{ sessionStatusText(s) }}</div>
                 </div>
-                <div class="progress pulso-progress mb-1" aria-hidden="true">
-                  <div
-                    class="progress-bar"
-                    [class.pulso-progress-danger]="s.session.alert_fired"
-                    [class.pulso-progress-ok]="!s.session.alert_fired"
-                    [style.width.%]="progressPct()"
-                  ></div>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <div
+                  class="pulso-card p-3 h-100"
+                  [class.metric-alert-border]="s.session.alert_fired"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <div class="small fw-bold text-uppercase pulso-muted">Energía acumulada</div>
+                  <div class="metric-value tabular-nums my-1">
+                    {{ fmtEnergy(s.session.energy_wh, s.site.kind) }}
+                  </div>
+                  <div class="progress pulso-progress mb-1" aria-hidden="true">
+                    <div
+                      class="progress-bar"
+                      [class.pulso-progress-danger]="s.session.alert_fired"
+                      [class.pulso-progress-ok]="!s.session.alert_fired"
+                      [style.width.%]="progressPct()"
+                    ></div>
+                  </div>
+                  <div class="small pulso-muted tabular-nums">
+                    {{ progressPct() }} % de {{ fmtEnergy(s.session.threshold_wh, s.site.kind) }}
+                  </div>
                 </div>
-                <div class="small pulso-muted tabular-nums">
-                  {{ progressPct() }} % de {{ fmtEnergy(s.session.threshold_wh, s.site.kind) }}
+              </div>
+
+              <div class="col-12 col-md-4">
+                <div class="pulso-card p-3 h-100" aria-live="polite" aria-atomic="true">
+                  <div class="small fw-bold text-uppercase pulso-muted">Restante al umbral</div>
+                  <div class="metric-value tabular-nums my-1">
+                    {{ fmtEnergy(s.session.remaining_wh, s.site.kind) }}
+                  </div>
+                  <div class="small pulso-muted tabular-nums">
+                    @if (s.session.total_power_w <= 0 || s.session.time_to_threshold_s === null) {
+                      Consumo detenido
+                    } @else if (s.session.time_to_threshold_s === 0) {
+                      Límite alcanzado
+                    } @else if (s.site.kind === 'venue') {
+                      ≈ {{ fmtDuration(s.session.time_to_threshold_s) }} al límite (tiempo simulado)
+                    } @else {
+                      ≈ {{ fmtDuration(s.session.time_to_threshold_s) }} al límite
+                    }
+                  </div>
                 </div>
               </div>
             </div>
+          </section>
 
-            <div class="col-12 col-md-4">
-              <div class="pulso-card p-3 h-100" aria-live="polite" aria-atomic="true">
-                <div class="small fw-bold text-uppercase pulso-muted">Restante al umbral</div>
-                <div class="metric-value tabular-nums my-1">
-                  {{ fmtEnergy(s.session.remaining_wh, s.site.kind) }}
-                </div>
-                <div class="small pulso-muted tabular-nums">
-                  @if (s.session.total_power_w <= 0 || s.session.time_to_threshold_s === null) {
-                    Consumo detenido
-                  } @else if (s.session.time_to_threshold_s === 0) {
-                    Límite alcanzado
-                  } @else {
-                    ≈ {{ fmtDuration(s.session.time_to_threshold_s) }} al límite
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 5. Charts -->
-        <section class="area-charts" aria-label="Gráficos de potencia y energía">
-          <app-energy-charts
-            [series]="s.series"
-            [gaps]="s.gaps"
-            [zones]="s.zones"
-            [thresholdWh]="s.session.threshold_wh"
-            [siteKind]="s.site.kind"
-          />
-        </section>
+          <!-- 5. Charts -->
+          <section class="area-charts" aria-label="Gráficos de potencia y energía">
+            <app-energy-charts
+              [series]="s.series"
+              [gaps]="s.gaps"
+              [zones]="s.zones"
+              [thresholdWh]="s.session.threshold_wh"
+              [siteKind]="s.site.kind"
+              [sessionStatus]="s.session.status"
+              [elapsedS]="s.session.elapsed_s"
+              [playing]="s.session.playing"
+            />
+          </section>
+        </div>
       </main>
+
+      <!-- 6. Savings Card (Venue only, never shown in bench) -->
+      @if (s.site.kind === 'venue' && store.comparison(); as cmp) {
+        <section class="pulso-card p-3 mt-3" aria-label="Tarjeta de ahorro estimado">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <h2 class="h6 fw-bold mb-0">Ahorro en la sede</h2>
+            <span class="badge-pulso-secondary">Estimación simulada</span>
+          </div>
+          <p class="fs-5 fw-bold mb-2">
+            Apagar la sala vacía al terminar la reunión ahorra
+            {{ fmtEnergy(cmp.difference_wh, 'venue') }} por jornada
+          </p>
+          <div class="d-flex flex-wrap gap-3 small fw-semibold tabular-nums">
+            <span>
+              Sala encendida {{ fmtEnergy(comparisonRunEnergy(cmp, 'A'), 'venue') }} vs.
+              Sala apagada {{ fmtEnergy(comparisonRunEnergy(cmp, 'B'), 'venue') }}
+            </span>
+            <span class="pulso-muted">
+              Salón iluminado: {{ fmtDuration(cmp.salon_on_seconds) }}
+            </span>
+          </div>
+        </section>
+      }
     } @else if (store.loading()) {
       <div class="pulso-card p-4 text-center">Cargando Pulso Energético…</div>
     } @else {
@@ -538,6 +869,15 @@
           <button type="submit" class="btn btn-pulso-primary w-100">
             Iniciar sesión
           </button>
+          @if (isLocalDemoHost) {
+            <button
+              type="button"
+              class="btn btn-pulso-outline w-100"
+              (click)="loginAsDemoOperator()"
+            >
+              Entrar como operador demo
+            </button>
+          }
         </form>
       </div>
     }
