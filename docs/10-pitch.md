@@ -9,36 +9,27 @@ Fuentes de las láminas: `docs/pitch/deck/`.
 
 ## 1. Pitch de 90 segundos (versión principal)
 
-Láminas: 1 Portada → 2 Problema → 4 Solución → 5 Demo → 6 Ahorro → 10 Cierre.
+Orden de láminas (actualizado): 1 Portada → 2 Problema → 4 Solución → 5 Impacto → 7 Por qué confiar → 8 Demo → 10 Cierre. La demo va al final, como remate.
 
-| Tiempo | Lámina | Qué se dice (texto exacto) | Qué se hace |
+| Tiempo | Lámina | Qué se dice | Qué se hace |
 |---|---|---|---|
-| 0:00–0:08 | 1 · Portada | «Somos [equipo], de Ecuador y Chile. Esto es **Pulso Energético**: la energía de tu sede, a la vista». | Sonrisa y mirar al jurado. |
-| 0:08–0:20 | 2 · Problema | «Quien abre y cierra una sede vecinal no sabe qué luz quedó encendida ni cuánto lleva gastado. Lo descubre cuando llega la boleta, y ahí ya no puede hacer nada». | — |
-| 0:20–0:30 | 4 · Solución | «Pulso responde tres preguntas en una pantalla: **qué está encendido, cuánto llevo y cuánto me falta** para el límite». | Señalar las tres tarjetas. |
-| 0:30–1:05 | 5 · Demo **en vivo** | «Día: abrimos la sede y encendemos el salón y la sala, 240 vatios. Tarde: terminó la reunión, apagamos la sala vacía y baja a 160; su energía queda guardada. Noche: llegamos al presupuesto y aparece **una sola alerta**, que también llega al Discord del equipo». | Navegador → ☰ → Modo presentación → «Siguiente paso» ×3. La alerta llega a los ~35 s. |
-| 1:05–1:20 | 6 · Ahorro | «Una decisión pequeña, repetida cada día: apagar la sala vacía ahorra **0,240 kWh por jornada** en nuestra sede de prueba. Es una estimación que queremos validar en una sede real». | Volver a las láminas. |
-| 1:20–1:30 | 10 · Cierre | «Pulso Energético: la energía de tu sede, a la vista. Gracias». | Pausa de 1 s. Fin. |
+| 0:00–0:15 | 1 Portada · 2 Problema | «Somos un equipo de Ecuador y Chile: esto es **Pulso Energético**. Quien abre una sede vecinal no sabe qué luz quedó encendida ni cuánto lleva gastado; lo descubre con la boleta, cuando ya es tarde». | — |
+| 0:15–0:32 | 4 Solución · 5 Impacto | «Pulso responde tres preguntas en una pantalla: **qué está encendido, cuánto llevo y cuánto me falta**. Apagar la sala vacía ahorra **0,240 kWh por jornada** en nuestra sede de prueba, una estimación que queremos validar». | — |
+| 0:32–0:42 | 7 Por qué confiar | «Está probado: 19 de 19 en la prueba de aceptación y cuatro auditorías sin fallos críticos». | — |
+| 0:42–1:20 | 8 Demo **en vivo** | Día: 240 W → Tarde: sala apagada, 160 W → Noche: **una sola alerta**, también en Discord. | Navegador → ☰ → Modo presentación → «Siguiente paso» ×3. |
+| 1:20–1:30 | 10 Cierre | «Pulso Energético: la energía de tu sede, a la vista. Gracias». | Pausa de 1 s. |
 
-**Truco de tiempo:** pulsen el paso 3 (Noche) **mientras dicen la frase de la Tarde**. Así la alerta aparece justo cuando terminan de hablar.
+**Truco de tiempo:** pulsen el paso 3 (Noche) mientras terminan la frase de la Tarde.
 
----
+## 2. Versión de 3 minutos
 
-## 2. Versión de 3 minutos (si dan más tiempo)
+Láminas 1 a 10 en el nuevo orden. Los tiempos están en las notas del orador:
+- 1 Portada, 2 Problema y 3 Para quién: 0:00–0:40.
+- 4 Solución y 5 Impacto: 0:40–1:10.
+- 6 Cómo funciona y 7 Por qué confiar: 1:10–1:50.
+- 8 Demo en vivo, 9 Lo que viene y 10 Cierre: 1:50–3:00.
 
-Láminas 1 a 10 en orden. Cada lámina tiene sus tiempos en las **notas del orador**:
-- 1 Portada, 0:00–0:10
-- 2 Problema, 0:10–0:25
-- 3 Usuario, 0:25–0:40
-- 4 Solución, 0:40–0:55
-- 5 Demo, 0:55–1:30
-- 6 Ahorro, 1:30–1:45
-- 7 Cómo funciona, 1:45–2:05
-- 8 Por qué confiar, 2:05–2:20
-- 9 Lo que viene, 2:20–2:40
-- 10 Cierre, 2:40–3:00
-
----
+El reparto por persona está en un PDF interno del equipo, fuera del repositorio.
 
 ## 3. Antes de subir al escenario (checklist, 10 min antes)
 
