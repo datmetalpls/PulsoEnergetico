@@ -196,6 +196,7 @@ configure_env() {
   hosts="${hosts:+$hosts,}localhost,127.0.0.1,web"
   log "ALLOWED_HOSTS=$hosts · WEB_BIND=$WEB_BIND"
   set_env_var "$envf" ALLOWED_HOSTS "$hosts"
+  set_env_var "$envf" PULSO_ORIGIN "EC2"
   set_env_var "$envf" WEB_BIND "$WEB_BIND"
 }
 

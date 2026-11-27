@@ -16,6 +16,12 @@ logger = logging.getLogger(__name__)
 
 USERNAME = 'Pulso Energético'
 FOOTER = 'Datos simulados · Prototipo hackatón Ecuador × Chile'
+
+
+def footer():
+    """Pie del mensaje con el origen del despliegue (PULSO_ORIGIN: local por defecto, EC2 en AWS)."""
+    origin = os.environ.get('PULSO_ORIGIN', 'local').strip()[:20] or 'local'
+    return f'{FOOTER} · Origen: {origin}'
 COLOR_PETROLEO = 0x0F4C5C
 COLOR_DORADO = 0xC9A227
 TIMEOUT_S = 5
@@ -108,7 +114,7 @@ def alert_payload(alert, scenario_clock):
             {'name': 'Energía acumulada', 'value': energy_text(site, alert.energy_wh), 'inline': True},
             {'name': 'Umbral', 'value': energy_text(site, alert.threshold_wh), 'inline': True},
         ],
-        'footer': {'text': FOOTER},
+        'footer': {'text': footer()},
     }]}
 
 
@@ -124,5 +130,5 @@ def report_payload(session, report):
             {'name': 'Energía acumulada', 'value': energy_text(site, values['energy_wh']), 'inline': True},
             {'name': 'Umbral', 'value': energy_text(site, values['threshold_wh']), 'inline': True},
         ],
-        'footer': {'text': FOOTER},
+        'footer': {'text': footer()},
     }]}

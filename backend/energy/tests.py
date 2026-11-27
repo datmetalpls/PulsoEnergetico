@@ -416,6 +416,14 @@ class DiscordTests(TestCase):
         self.assertEqual(mocked.call_args_list[call].kwargs['timeout'], 5)
         return json.loads(request.data)
 
+    def test_footer_shows_origin(self):
+        from energy import discord
+        with patch.dict(os.environ, {'PULSO_ORIGIN': 'EC2'}):
+            self.assertTrue(discord.footer().endswith('· Origen: EC2'))
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('PULSO_ORIGIN', None)
+            self.assertTrue(discord.footer().endswith('· Origen: local'))
+
     @patch('energy.discord.urllib.request.urlopen', return_value=FakeResponse())
     def test_alert_sent_once_with_units(self, urlopen):
         self.reach_threshold()
@@ -427,7 +435,7 @@ class DiscordTests(TestCase):
         self.assertTrue(values['Energía acumulada'].endswith(' Wh'))
         self.assertEqual(values['Umbral'], '0,0200 Wh')
         self.assertEqual(values['Hora del escenario'], '08:00:36')
-        self.assertEqual(embed['footer']['text'], 'Datos simulados · Prototipo hackatón Ecuador × Chile')
+        self.assertTrue(embed['footer']['text'].startswith('Datos simulados · Prototipo hackatón Ecuador × Chile · Origen: '))
         self.assertIsNotNone(Alert.objects.get(session=self.session).discord_sent_at)
         self.assertEqual(AuditEvent.objects.get(session=self.session, action='discord.alert').payload,
                          {'ok': True, 'http_status': 204})
