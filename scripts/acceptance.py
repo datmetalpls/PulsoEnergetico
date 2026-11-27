@@ -56,8 +56,10 @@ s, _ = op("POST", "/api/sites/puente-alto-banco/sessions", {}); check("operador 
 
 # --- Duplicados de telemetría (sesión nueva) ---
 s, st = op("POST", "/api/sites/cuenca-banco/sessions", {}); sid2 = st["session"]["id"]; op("POST", f"/api/sessions/{sid2}/pause")
-s1, r1 = op("POST", f"/api/sessions/{sid2}/readings", TELEMETRY)
-s2, r2 = op("POST", f"/api/sessions/{sid2}/readings", TELEMETRY)
+# reading_id es único globalmente: se prefija con la sesión para que cada corrida use ids nuevos
+batch = {**TELEMETRY, "readings": [{**r, "reading_id": f"{sid2}:{r['reading_id']}"} for r in TELEMETRY["readings"]]}
+s1, r1 = op("POST", f"/api/sessions/{sid2}/readings", batch)
+s2, r2 = op("POST", f"/api/sessions/{sid2}/readings", batch)
 s, st = op("GET", "/api/sites/cuenca-banco/state")
 exp = TELEMETRY["expected"]["energy_wh"]
 check("reenviar lote no duplica Wh", abs(st["session"]["energy_wh"] - exp) < 1e-6, (st["session"]["energy_wh"], exp))
