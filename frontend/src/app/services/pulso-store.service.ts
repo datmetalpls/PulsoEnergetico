@@ -157,6 +157,7 @@ export class PulsoStoreService {
     this.pollTimer = setInterval(() => {
       if (
         !this.isMockMode() &&
+        this.auth().authenticated &&
         typeof document !== 'undefined' &&
         document.visibilityState === 'visible'
       ) {
@@ -169,14 +170,26 @@ export class PulsoStoreService {
     this.api
       .getMe()
       .pipe(catchError(() => of(this.auth())))
-      .subscribe((me) => this.auth.set(me));
+      .subscribe((me) => {
+        this.auth.set(me);
+        if (!me.authenticated) {
+          this.loading.set(false);
+          this.errorMessage.set('Inicia sesión para consultar el recinto o banco de pruebas.');
+          return;
+        }
+        this.loadLocalitiesAndState();
+      });
+  }
 
+  private loadLocalitiesAndState(): void {
     this.api
       .getLocalities()
       .pipe(
-        catchError(() => {
+        catchError((err) => {
           this.errorMessage.set(
-            'Backend no disponible en /api. Usa ?mock=1 para el prototipo navegable.'
+            err?.status === 403
+              ? 'Inicia sesión para acceder a las localidades.'
+              : 'Backend no disponible en /api. Usa ?mock=1 para el prototipo navegable.'
           );
           this.loading.set(false);
           return of([]);
@@ -185,9 +198,13 @@ export class PulsoStoreService {
       .subscribe((locs) => {
         if (locs.length > 0) {
           this.localities.set(locs);
-          this.selectedLocalitySlug.set(locs[0].slug);
-          if (locs[0].sites.length > 0) {
-            this.selectedSiteSlug.set(locs[0].sites[0].slug);
+          const currentLoc = locs.find((l) => l.slug === this.selectedLocalitySlug()) ?? locs[0];
+          this.selectedLocalitySlug.set(currentLoc.slug);
+          if (currentLoc.sites.length > 0) {
+            const currentSite =
+              currentLoc.sites.find((s) => s.slug === this.selectedSiteSlug()) ??
+              currentLoc.sites[0];
+            this.selectedSiteSlug.set(currentSite.slug);
             this.fetchCurrentState();
           }
         }
@@ -300,7 +317,7 @@ export class PulsoStoreService {
         if (me) {
           this.errorMessage.set(null);
           this.auth.set(me);
-          this.fetchCurrentState();
+          this.loadLocalitiesAndState();
         }
       });
   }
@@ -325,7 +342,8 @@ export class PulsoStoreService {
         role: 'observer',
         operable_sites: [],
       });
-      this.fetchCurrentState();
+      this.state.set(null);
+      this.errorMessage.set('Sesión cerrada. Inicia sesión para continuar.');
     });
   }
 

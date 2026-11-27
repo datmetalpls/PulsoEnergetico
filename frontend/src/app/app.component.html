@@ -42,12 +42,12 @@
       </nav>
     }
 
-    <!-- Header -->
+    <!-- Main View when state is loaded -->
     @if (store.state(); as s) {
       <header class="pulso-card p-3 mb-3">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
           <div>
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
               <h1 class="h4 fw-bold mb-0 me-2">Pulso Energético</h1>
 
               <label for="locality-select" class="visually-hidden">Localidad</label>
@@ -77,21 +77,6 @@
               </select>
 
               <span class="badge-sim">{{ s.data_label }}</span>
-            </div>
-
-            <div class="d-flex flex-wrap align-items-center gap-3 small pulso-muted">
-              <span>
-                Origen:
-                @for (src of s.sources_available; track src; let last = $last) {
-                  <strong [class.text-decoration-underline]="s.active_source === src">
-                    {{ s.active_source === src ? '●' : '○' }} {{ fmtSource(src) }}
-                  </strong>
-                  @if (!last) { · }
-                }
-              </span>
-              <span>
-                Hardware: {{ s.hardware.simulated_board }} / {{ s.hardware.planned_board }}
-              </span>
             </div>
           </div>
 
@@ -127,33 +112,29 @@
             <!-- Session playback controls (Operator only) -->
             @if (store.canOperate()) {
               <div class="d-flex flex-wrap align-items-center gap-2">
-                @if (s.session.status === 'idle') {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-pulso-primary"
-                    (click)="store.startSession()"
-                  >
-                    Iniciar ensayo
-                  </button>
-                } @else {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-pulso-primary"
-                    [disabled]="s.session.playing"
-                    (click)="store.play()"
-                  >
-                    ▶ Reproducir
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-pulso-outline"
-                    [disabled]="!s.session.playing"
-                    (click)="store.pause()"
-                  >
-                    ⏸ Pausar
-                  </button>
-                }
-
+                <button
+                  type="button"
+                  class="btn btn-sm btn-pulso-outline"
+                  (click)="store.startSession()"
+                >
+                  Iniciar ensayo
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-pulso-primary"
+                  [disabled]="s.session.playing || s.session.status === 'idle'"
+                  (click)="store.play()"
+                >
+                  ▶ Reproducir
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-pulso-outline"
+                  [disabled]="!s.session.playing"
+                  (click)="store.pause()"
+                >
+                  ⏸ Pausar
+                </button>
                 <button
                   type="button"
                   class="btn btn-sm btn-pulso-outline"
@@ -161,30 +142,6 @@
                 >
                   ⏭ Siguiente franja
                 </button>
-
-                @if (s.site.kind === 'venue') {
-                  <div class="btn-group btn-group-sm" role="group" aria-label="Velocidad de simulación">
-                    <button
-                      type="button"
-                      class="btn"
-                      [class.btn-pulso-primary]="s.session.speed === 60"
-                      [class.btn-pulso-outline]="s.session.speed !== 60"
-                      (click)="store.setSpeed(60)"
-                    >
-                      ×60
-                    </button>
-                    <button
-                      type="button"
-                      class="btn"
-                      [class.btn-pulso-primary]="s.session.speed === 300"
-                      [class.btn-pulso-outline]="s.session.speed !== 300"
-                      (click)="store.setSpeed(300)"
-                    >
-                      ×300
-                    </button>
-                  </div>
-                }
-
                 <button
                   type="button"
                   class="btn btn-sm btn-pulso-outline"
@@ -197,7 +154,7 @@
           </div>
         </div>
 
-        <!-- Simple login panel -->
+        <!-- Inline login panel -->
         @if (showLogin()) {
           <form
             class="pulso-surface-alt p-3 mt-3 d-flex flex-wrap align-items-end gap-2"
@@ -337,11 +294,11 @@
           }
         </section>
 
-        <!-- Alerts, Sound & Report -->
-        <section class="area-alerts d-flex flex-column gap-3" aria-label="Alertas y reporte">
+        <!-- Persistent Alert Band (Sound optional) -->
+        <section class="area-alerts d-flex flex-column gap-3" aria-label="Alertas">
           <div class="pulso-card p-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <h2 class="h6 fw-bold mb-0">Alertas y aviso sonoro</h2>
+              <h2 class="h6 fw-bold mb-0">Alertas</h2>
               <button
                 type="button"
                 class="btn btn-sm"
@@ -349,11 +306,10 @@
                 [class.btn-pulso-outline]="!audio.soundEnabled()"
                 (click)="toggleSound()"
               >
-                {{ audio.soundEnabled() ? '🔊 Sonido activo' : '🔇 Activar sonido' }}
+                {{ audio.soundEnabled() ? '🔊 Sonido activo' : '🔇 Activar sonido (opcional)' }}
               </button>
             </div>
 
-            <!-- Persistent alert band -->
             @if (s.alerts.length > 0 || s.session.alert_fired) {
               <div class="band-danger p-3 mb-2" role="alert" aria-live="assertive">
                 <div class="fw-bold mb-1">
@@ -374,46 +330,14 @@
                 }
               </div>
             } @else {
-              <div class="pulso-surface-alt p-2 small pulso-muted mb-2" role="status">
-                Sin alertas activas · Canal: Aviso del navegador (imita el buzzer, 0,8 s, una vez)
+              <div class="pulso-surface-alt p-2 small pulso-muted" role="status">
+                Sin alertas activas
               </div>
             }
 
-            <!-- Disconnection / Gap warning -->
             @if (!s.session.connected || s.gaps.length > 0) {
-              <div class="band-warn p-2 small fw-semibold mb-2" role="status">
+              <div class="band-warn p-2 small fw-semibold mt-2" role="status">
                 ⚠ Conexión interrumpida · sin datos de {{ store.totalGapSeconds() || 10 }} s
-              </div>
-            }
-
-            <!-- Report button & Discord preview -->
-            <div class="d-flex flex-wrap gap-2 mt-2">
-              <button
-                type="button"
-                class="btn btn-sm btn-pulso-primary"
-                (click)="listenReport()"
-              >
-                🗣 Escuchar reporte
-              </button>
-              @if (speech.speaking()) {
-                <button
-                  type="button"
-                  class="btn btn-sm btn-pulso-outline"
-                  (click)="speech.stop()"
-                >
-                  Detener voz
-                </button>
-              }
-            </div>
-
-            @if (store.report(); as rep) {
-              <div class="pulso-surface-alt p-2 mt-3 small">
-                <div class="fw-bold mb-1">Reporte de sesión</div>
-                <p class="mb-2">{{ rep.text }}</p>
-                <div class="discord-card p-2">
-                  <div class="fw-bold mb-1">Discord · {{ rep.discord_preview.label }}</div>
-                  <div>{{ rep.discord_preview.content }}</div>
-                </div>
               </div>
             }
           </div>
@@ -485,54 +409,49 @@
             [siteKind]="s.site.kind"
           />
         </section>
-
-        <!-- Venue extras: Comparison & Context Card -->
-        @if (s.site.kind === 'venue') {
-          <section class="area-extras d-flex flex-column gap-3" aria-label="Comparación y contexto">
-            @if (store.comparison(); as cmp) {
-              <div class="pulso-card p-3">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                  <h2 class="h6 fw-bold mb-0">Comparación de jornada (hipótesis)</h2>
-                  <span class="badge bg-secondary">{{ cmp.note }}</span>
-                </div>
-                <div class="row g-2 mb-2">
-                  @for (run of cmp.runs; track run.key) {
-                    <div class="col-12 col-md-6">
-                      <div class="pulso-surface-alt p-2 h-100">
-                        <div class="small fw-bold">{{ run.label }}</div>
-                        <div class="h5 fw-bold tabular-nums mb-0">
-                          {{ fmtEnergy(run.energy_wh, 'venue') }}
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-                <div class="small fw-semibold">
-                  Diferencia estimada:
-                  <span class="tabular-nums">{{ fmtEnergy(cmp.difference_wh, 'venue') }}</span>
-                  · Salón principal iluminado:
-                  <span class="tabular-nums">{{ fmtDuration(cmp.salon_on_seconds) }}</span>
-                </div>
-              </div>
-            }
-
-            @if (s.context_card; as ctx) {
-              <div class="pulso-card p-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <h2 class="h6 fw-bold mb-0">Contexto ({{ ctx.unit }})</h2>
-                  <span class="badge bg-secondary">{{ ctx.label }}</span>
-                </div>
-                <p class="small pulso-muted mb-0">{{ ctx.text }}</p>
-              </div>
-            }
-          </section>
-        }
       </main>
     } @else if (store.loading()) {
       <div class="pulso-card p-4 text-center">Cargando Pulso Energético…</div>
     } @else {
-      <div class="band-warn p-4" role="alert">
-        {{ store.errorMessage() || 'No hay datos disponibles.' }}
+      <!-- Login screen when unauthenticated in real mode -->
+      <div class="pulso-card p-4 mx-auto" style="max-width: 460px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h1 class="h4 fw-bold mb-0">Pulso Energético</h1>
+          <span class="badge-sim">Datos simulados</span>
+        </div>
+
+        @if (store.errorMessage(); as err) {
+          <div class="pulso-surface-alt p-2 small mb-3" role="status">{{ err }}</div>
+        }
+
+        <form class="d-flex flex-column gap-3" (ngSubmit)="onLoginSubmit()">
+          <div>
+            <label for="login-user-main" class="form-label small fw-bold mb-1">Usuario</label>
+            <input
+              id="login-user-main"
+              type="text"
+              class="form-control"
+              [(ngModel)]="loginUsername"
+              name="username"
+              placeholder="operador_cuenca / observador"
+              required
+            />
+          </div>
+          <div>
+            <label for="login-pass-main" class="form-label small fw-bold mb-1">Contraseña</label>
+            <input
+              id="login-pass-main"
+              type="password"
+              class="form-control"
+              [(ngModel)]="loginPassword"
+              name="password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-pulso-primary w-100">
+            Iniciar sesión
+          </button>
+        </form>
       </div>
     }
   </div>
