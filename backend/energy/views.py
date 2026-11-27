@@ -1,9 +1,11 @@
 import json
 import math
+import time
 from pathlib import Path
 from functools import wraps
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django.core.cache import cache
 from django.db import transaction
 from django.http import JsonResponse, FileResponse, Http404
 from django.middleware.csrf import get_token
@@ -15,8 +17,8 @@ from .services import audit, new_session, catch_up, advance, immediate, next_ban
 
 
 class APIError(Exception):
-    def __init__(self, error, status=400, fields=None):
-        self.error, self.status, self.fields = error, status, fields
+    def __init__(self, error, status=400, fields=None, headers=None):
+        self.error, self.status, self.fields, self.headers = error, status, fields, headers or {}
 
 
 def invalid(field, message='Valor inválido'):
@@ -63,7 +65,10 @@ def endpoint(methods):
                 body = {'error': exc.error}
                 if exc.fields is not None:
                     body['fields'] = exc.fields
-                return JsonResponse(body, status=exc.status)
+                response = JsonResponse(body, status=exc.status)
+                for key, value in exc.headers.items():
+                    response[key] = value
+                return response
             except (Site.DoesNotExist, Session.DoesNotExist, ZoneState.DoesNotExist, Alert.DoesNotExist):
                 return JsonResponse({'error': 'not_found'}, status=404)
         return wrapped
@@ -93,6 +98,14 @@ def locked_session(request, session_id, write=False):
     return session
 
 
+def login_rate_key(request):
+    return f"login_fail:{request.META.get('REMOTE_ADDR', 'unknown')}"
+
+
+def login_recent_failures(key, now, window):
+    return [ts for ts in cache.get(key, []) if now - ts < window]
+
+
 def csrf_failure(request, reason=''):
     return JsonResponse({'error': 'forbidden'}, status=403)
 
@@ -110,9 +123,20 @@ def auth(request, action, data):
         fields_only(data, ['username', 'password'])
         if not isinstance(data.get('username'), str) or not isinstance(data.get('password'), str):
             invalid('credentials')
+        limit = getattr(settings, 'LOGIN_RATE_LIMIT', 5)
+        window = getattr(settings, 'LOGIN_RATE_WINDOW_S', 60)
+        rate_key = login_rate_key(request)
+        now = time.time()
+        recent = login_recent_failures(rate_key, now, window)
+        if len(recent) >= limit:
+            retry_after = max(1, math.ceil(window - (now - recent[0])))
+            raise APIError('rate_limited', 429, headers={'Retry-After': str(retry_after)})
         user = authenticate(request, username=data['username'], password=data['password'])
         if not user:
+            recent.append(now)
+            cache.set(rate_key, recent, timeout=window)
             raise APIError('forbidden', 403)
+        cache.delete(rate_key)
         login(request, user)
         audit(user, None, 'auth.login')
     elif action == 'logout':

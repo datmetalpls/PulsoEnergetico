@@ -7,13 +7,14 @@
 #   ./deploy-ec2.sh status     # contenedores, memoria y últimas líneas del log
 # Uso en el portátil o en la EC2 para reiniciar el ensayo (menos de 10 s):
 #   BASE_URL=http://localhost:8080 ENV_FILE=.env ./scripts/deploy-ec2.sh reset-demo
-# Variables opcionales: APP_DIR, REPO_URL, IMAGES_TAR, PUBLIC_PORT, SWAP_GB, BUDGET_KWH, BASE_URL, ENV_FILE.
+# Variables opcionales: APP_DIR, REPO_URL, IMAGES_TAR, WEB_BIND, PUBLIC_PORT, SWAP_GB, BUDGET_KWH, BASE_URL, ENV_FILE.
 # No llama a ninguna API de AWS: solo usa el servicio de metadatos de la propia instancia.
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/PulsoEnergetico}"
 REPO_URL="${REPO_URL:-https://github.com/datmetalpls/PulsoEnergetico.git}"
 IMAGES_TAR="${IMAGES_TAR:-$HOME/pulso-images.tar.gz}"
+WEB_BIND="${WEB_BIND:-0.0.0.0}"
 PUBLIC_PORT="${PUBLIC_PORT:-8080}"
 SWAP_GB="${SWAP_GB:-2}"
 BUDGET_KWH="${BUDGET_KWH:-0.15}"
@@ -96,8 +97,24 @@ sync_repo() {
 }
 
 write_override() {
-  log "Escribiendo compose.ec2.yml (bind 0.0.0.0:${PUBLIC_PORT}, imagen precompilada, restart)"
-  cat > "$APP_DIR/compose.ec2.yml" <<EOF
+  local needs_port_override=1
+  if [ "$PUBLIC_PORT" = "8080" ] && grep -q 'WEB_BIND' "$APP_DIR/docker-compose.yml" 2>/dev/null; then
+    needs_port_override=0
+  fi
+  if [ "$needs_port_override" -eq 0 ]; then
+    log "Escribiendo compose.ec2.yml (imagen precompilada; bind ${WEB_BIND}:8080 y restart heredados de docker-compose.yml)"
+    cat > "$APP_DIR/compose.ec2.yml" <<EOF
+# Solo para la EC2. No se sube al repo. Generado por scripts/deploy-ec2.sh.
+# El bind ${WEB_BIND}:8080 (vía WEB_BIND en .env) y restart: unless-stopped vienen de docker-compose.yml.
+services:
+  web:
+    build: !reset null
+    image: ${WEB_IMAGE}
+    pull_policy: never
+EOF
+  else
+    log "Escribiendo compose.ec2.yml (bind ${WEB_BIND}:${PUBLIC_PORT} con !override, imagen precompilada, restart)"
+    cat > "$APP_DIR/compose.ec2.yml" <<EOF
 # Solo para la EC2. No se sube al repo. Generado por scripts/deploy-ec2.sh.
 services:
   db:
@@ -108,8 +125,9 @@ services:
     pull_policy: never
     restart: unless-stopped
     ports: !override
-      - "0.0.0.0:${PUBLIC_PORT}:8000"
+      - "${WEB_BIND}:${PUBLIC_PORT}:8000"
 EOF
+  fi
 }
 
 load_images() {
@@ -140,6 +158,14 @@ public_host() { # IP pública y DNS desde IMDSv2; vacío si no responde
   return 0
 }
 
+set_env_var() { # set_env_var ARCHIVO CLAVE VALOR
+  if grep -q "^$2=" "$1"; then
+    sed -i "s|^$2=.*|$2=$3|" "$1"
+  else
+    printf '\n%s=%s\n' "$2" "$3" >> "$1"
+  fi
+}
+
 configure_env() {
   local envf="$APP_DIR/.env"
   [ -f "$envf" ] || die "Falta $envf. Copiarlo desde el portátil con scp (nunca subirlo al repo); ver deploy-ec2.md §1"
@@ -149,12 +175,9 @@ configure_env() {
   hosts="$(public_host | grep -v '^$' | paste -sd, -)"
   [ -n "$hosts" ] || echo "AVISO: IMDS no respondió; ALLOWED_HOSTS queda solo local" >&2
   hosts="${hosts:+$hosts,}localhost,127.0.0.1,web"
-  log "ALLOWED_HOSTS=$hosts"
-  if grep -q '^ALLOWED_HOSTS=' "$envf"; then
-    sed -i "s|^ALLOWED_HOSTS=.*|ALLOWED_HOSTS=${hosts}|" "$envf"
-  else
-    printf '\nALLOWED_HOSTS=%s\n' "$hosts" >> "$envf"
-  fi
+  log "ALLOWED_HOSTS=$hosts · WEB_BIND=$WEB_BIND"
+  set_env_var "$envf" ALLOWED_HOSTS "$hosts"
+  set_env_var "$envf" WEB_BIND "$WEB_BIND"
 }
 
 up() {
