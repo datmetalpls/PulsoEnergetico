@@ -1,0 +1,16 @@
+<section id="como" class="oscuro contenido" data-transition="fade">
+<p class="eyebrow">CÓMO FUNCIONA</p>
+<h2>Simple por fuera, riguroso por dentro</h2>
+<div class="flujo">
+<div class="caja entra" style="--i:0"><h3>Lecturas</h3><p class="texto">Simulador local hoy; mañana una Raspberry Pi en la sede.</p></div>
+<x-connector head="end"></x-connector>
+<div class="caja clave entra" style="--i:1"><h3>Servidor</h3><p class="texto">Django calcula W y Wh, evita duplicados y emite una sola alerta.</p></div>
+<x-connector head="end"></x-connector>
+<div class="caja entra" style="--i:2"><h3>Pantalla</h3><p class="texto">Angular en el navegador o el móvil. Funciona sin Internet.</p></div>
+<x-connector head="end"></x-connector>
+<div class="caja entra" style="--i:3"><h3>Aviso</h3><p class="texto">Alerta y reporte al canal de Discord del equipo.</p></div>
+</div>
+<p class="formula entra" style="--i:4">Energía del intervalo = <b>potencia anterior × segundos ÷ 3600</b> · PostgreSQL guarda cada lectura</p>
+<div class="pie"><p>Pulso Energético · Docker Compose · local o AWS EC2</p><p class="num"></p></div>
+<aside>[Versión de 3 min, 1:45–2:05] Por dentro: las lecturas llegan al servidor, que calcula la potencia y la energía con una regla única, descarta duplicados y emite una sola alerta. La pantalla funciona en el computador y en el móvil, incluso sin Internet. Todo corre con Docker, en un portátil o en una instancia de AWS.</aside>
+</section>

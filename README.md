@@ -351,7 +351,7 @@ Respaldo opcional de la base de datos: [`scripts/shutdown-ec2.md`](scripts/shutd
 | `frontend/` | Angular 19 + Bootstrap, servido por Django en el mismo origen |
 | `contracts/` | Ejemplos JSON del contrato entre la interfaz y el backend (v0.1.2) |
 | `design/brand/sello-latino/` | **Identidad oficial**: sello en 3 niveles, paleta, tipografías y lámina 16:9 |
-| `docs/` | Ficha (00), tablero (01), contrato (02), wireframe (03), resultados (05), plan AWS (06), riesgos (07), guion de 90 s (08), Discord (09) e [informe PDF](docs/informe/Pulso-Energetico-Informe-Equipo.pdf) |
+| `docs/` | Ficha (00), tablero (01), contrato (02), wireframe (03), resultados (05), plan AWS (06), riesgos (07), guion de 90 s (08), Discord (09), [pitch y guion](docs/10-pitch.md) (10) e [informe PDF](docs/informe/Pulso-Energetico-Informe-Equipo.pdf) |
 | `scripts/` | Prueba de aceptación, despliegue en EC2 y apagado |
 | `audits/` | Auditorías de seguridad, legibilidad, QA y arquitectura |
 
