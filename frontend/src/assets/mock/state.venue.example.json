@@ -1,0 +1,161 @@
+{
+  "contract_version": "0.1",
+  "data_label": "Datos simulados",
+  "server_time": "2026-11-27T13:20:00Z",
+  "locality": {
+    "slug": "puente-alto",
+    "name": "Puente Alto",
+    "country": "Chile",
+    "timezone": "America/Santiago"
+  },
+  "site": {
+    "slug": "puente-alto-sede",
+    "name": "Sede Vecinal Los Andes (ficticia)",
+    "kind": "venue",
+    "fictitious": true,
+    "budget_kwh_day": 0.6,
+    "sample_interval_s": 60
+  },
+  "sources_available": [
+    "simulator",
+    "wokwi_import"
+  ],
+  "active_source": "simulator",
+  "hardware": {
+    "simulated_board": "Raspberry Pi Pico (Wokwi)",
+    "planned_board": "Raspberry Pi Zero W (montaje físico previsto)"
+  },
+  "permissions": {
+    "role": "operator",
+    "can_operate": true
+  },
+  "session": {
+    "id": "3f2b8c1e-0000-4000-8000-000000000002",
+    "status": "running",
+    "started_at": "2026-11-27T13:00:00Z",
+    "playing": true,
+    "speed": 300,
+    "connected": true,
+    "elapsed_s": 10800,
+    "scenario_clock": "19:00:00",
+    "band": "night",
+    "band_label": "Noche",
+    "threshold_wh": 600.0,
+    "energy_wh": 600.0,
+    "remaining_wh": 0.0,
+    "total_power_w": 160.0,
+    "time_to_threshold_s": 0,
+    "status_label": "Presupuesto alcanzado",
+    "alert_fired": true
+  },
+  "zones": [
+    {
+      "slug": "salon-principal",
+      "name": "Salón principal",
+      "kind": "light",
+      "dimmable": false,
+      "simulated_control": true,
+      "on": true,
+      "indicator": {
+        "led": "green",
+        "label": "Encendida"
+      },
+      "voltage_v": 220.0,
+      "current_a": 0.727,
+      "max_current_a": null,
+      "intensity_pct": null,
+      "power_w": 160.0,
+      "energy_wh": 480.0,
+      "on_seconds": 10800
+    },
+    {
+      "slug": "sala-reuniones",
+      "name": "Sala de reuniones",
+      "kind": "light",
+      "dimmable": true,
+      "simulated_control": true,
+      "on": false,
+      "indicator": {
+        "led": "off",
+        "label": "Apagada"
+      },
+      "voltage_v": 220.0,
+      "current_a": 0.0,
+      "max_current_a": null,
+      "intensity_pct": 75,
+      "power_w": 0.0,
+      "energy_wh": 120.0,
+      "on_seconds": 7200
+    }
+  ],
+  "alerts": [
+    {
+      "id": "a1",
+      "kind": "threshold",
+      "t_s": 10800,
+      "energy_wh": 600.0,
+      "threshold_wh": 600.0,
+      "channel": "browser",
+      "channel_label": "Aviso del navegador (imita el buzzer)",
+      "message": "Se alcanzó el presupuesto de 0,600 kWh de la jornada",
+      "acknowledged": false
+    }
+  ],
+  "gaps": [
+    {
+      "zone": "salon-principal",
+      "from_t_s": 3600,
+      "to_t_s": 3900,
+      "duration_s": 300,
+      "label": "Sin datos: conexión interrumpida"
+    }
+  ],
+  "series": {
+    "salon-principal": [
+      {
+        "t_s": 0,
+        "power_w": 160,
+        "energy_wh": 0
+      },
+      {
+        "t_s": 10800,
+        "power_w": 160,
+        "energy_wh": 480
+      }
+    ],
+    "sala-reuniones": [
+      {
+        "t_s": 0,
+        "power_w": 0,
+        "energy_wh": 0
+      },
+      {
+        "t_s": 3600,
+        "power_w": 60,
+        "energy_wh": 0
+      },
+      {
+        "t_s": 10800,
+        "power_w": 0,
+        "energy_wh": 120
+      }
+    ],
+    "total": [
+      {
+        "t_s": 0,
+        "power_w": 160,
+        "energy_wh": 0
+      },
+      {
+        "t_s": 10800,
+        "power_w": 160,
+        "energy_wh": 600
+      }
+    ]
+  },
+  "context_card": {
+    "label": "Estimación ilustrativa",
+    "unit": "MWh/día",
+    "text": "Rangos urbanos aportados por el equipo: pendientes. El banco de pruebas mantiene su escala en Wh."
+  }
+}

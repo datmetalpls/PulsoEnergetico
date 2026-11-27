@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wireframe Escritorio (1440 px) — Pulso Energético</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #e9eeeb;
+      color: #15221b;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .canvas {
+      max-width: 1440px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 2px solid #2b3b32;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .topbar {
+      padding: 14px 20px;
+      border-bottom: 2px solid #2b3b32;
+      background: #f5f8f6;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 0.04em;
+    }
+    .box {
+      border: 1.5px solid #495d52;
+      border-radius: 6px;
+      padding: 4px 10px;
+      background: #ffffff;
+      font-size: 0.9rem;
+    }
+    .badge-sim {
+      background: #15221b;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      min-height: 700px;
+    }
+    .left-col {
+      border-right: 2px solid #2b3b32;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #fafcfb;
+    }
+    .right-col {
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .section-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #495d52;
+      margin: 0 0 8px 0;
+    }
+    .card {
+      border: 1.5px solid #495d52;
+      border-radius: 8px;
+      padding: 14px;
+      background: #ffffff;
+    }
+    .led-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .led {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #17804f;
+      border: 2px solid #0e5333;
+      display: inline-block;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #15221b;
+      background: #17804f;
+      color: #ffffff;
+      font-weight: 700;
+      border-radius: 6px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .slider-mock {
+      border: 1px dashed #6b7d73;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .metric-card {
+      border: 1.5px solid #495d52;
+      border-radius: 8px;
+      padding: 14px;
+      background: #ffffff;
+    }
+    .metric-val {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 4px 0;
+    }
+    .progress-bar {
+      height: 10px;
+      background: #dce4df;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-fill {
+      width: 50%;
+      height: 100%;
+      background: #17804f;
+    }
+    .chart-box {
+      border: 1.5px solid #495d52;
+      border-radius: 8px;
+      padding: 14px;
+      background: #ffffff;
+    }
+    .alert-band {
+      border: 1.5px solid #8a9b91;
+      border-radius: 6px;
+      padding: 10px;
+      background: #f1f5f3;
+      font-size: 0.9rem;
+    }
+    .discord-box {
+      border: 1.5px dashed #5865f2;
+      border-radius: 6px;
+      padding: 10px;
+      background: #f5f6fe;
+      font-size: 0.86rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas" role="document" aria-label="Wireframe de escritorio 1440 px">
+    <header class="topbar">
+      <div>
+        <div class="row" style="margin-bottom:8px;">
+          <span class="brand">PULSO ENERGÉTICO</span>
+          <span class="box">[Cuenca ▾]</span>
+          <span>›</span>
+          <span class="box">[Banco de pruebas 5 V ▾]</span>
+          <span class="badge-sim">Datos simulados</span>
+        </div>
+        <div class="row" style="font-size:0.86rem; color:#495d52;">
+          <span>Origen: ● Simulador local &nbsp; ○ Lecturas importadas de Wokwi</span>
+          <span>·</span>
+          <span>Raspberry Pi Pico (Wokwi) / Raspberry Pi Zero W prevista</span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div class="row" style="justify-content:flex-end; margin-bottom:8px;">
+          <span class="box">☀ Día · 08:00:18</span>
+          <span class="box">Operador ▾</span>
+        </div>
+        <div class="row" style="justify-content:flex-end;">
+          <span>Ensayo: <strong>18 s</strong></span>
+          <span class="box">▶ Reproducir</span>
+          <span class="box">⏸ Pausar</span>
+          <span class="box">⏭ Siguiente franja</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <aside class="left-col">
+        <div>
+          <h2 class="section-title">Zonas / Carga</h2>
+          <div class="card">
+            <div class="led-row">
+              <span class="led" aria-hidden="true"></span>
+              <span>Carga habilitada · Carga simulada 5 V</span>
+            </div>
+            <div class="btn-primary">ENCENDIDA ⏻</div>
+            <div class="slider-mock">
+              Perilla de corriente: <strong>0,40 A</strong> (0,00 – 0,80 A)
+              <svg viewBox="0 0 280 24" width="100%" height="24" aria-hidden="true">
+                <line x1="10" y1="12" x2="270" y2="12" stroke="#b5c2ba" stroke-width="4" stroke-linecap="round"/>
+                <line x1="10" y1="12" x2="140" y2="12" stroke="#17804f" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="140" cy="12" r="8" fill="#17804f" stroke="#15221b" stroke-width="2"/>
+              </svg>
+            </div>
+            <div style="font-size:0.88rem; color:#495d52;">
+              5,00 V · 2,00 W<br>
+              0,0100 Wh · 18 s encendido
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Alertas y reporte</h2>
+          <div class="card" style="display:flex; flex-direction:column; gap:10px;">
+            <div class="alert-band">
+              <strong>Estado de alerta:</strong> (sin alertas activas)<br>
+              <small>Canal: Aviso del navegador (imita el buzzer, 0,8 s, una vez)</small>
+            </div>
+            <div class="row">
+              <span class="box">🔊 Activar sonido</span>
+              <span class="box">🗣 Escuchar reporte</span>
+            </div>
+            <div class="discord-box">
+              <strong>Discord · Simulación local</strong><br>
+              ⚡ Pulso Energético · Banco de pruebas 5 V (Cuenca) — resumen listo.
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="right-col">
+        <section class="metrics-grid" aria-label="Tres cifras clave">
+          <div class="metric-card">
+            <div class="section-title">Potencia actual</div>
+            <div class="metric-val">2,00 W</div>
+            <small>Consumo instantáneo total</small>
+          </div>
+          <div class="metric-card">
+            <div class="section-title">Energía acumulada</div>
+            <div class="metric-val">0,0100 Wh</div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <small>50 % de 0,0200 Wh</small>
+          </div>
+          <div class="metric-card">
+            <div class="section-title">Restante al umbral</div>
+            <div class="metric-val">0,0100 Wh</div>
+            <small>≈ 18 s al límite</small>
+          </div>
+        </section>
+
+        <section class="chart-box">
+          <div class="section-title">Potencia (W) vs tiempo del ensayo (s)</div>
+          <svg viewBox="0 0 800 170" width="100%" height="170" role="img" aria-label="Wireframe gráfico de potencia">
+            <rect x="45" y="10" width="740" height="130" fill="#fafcfb" stroke="#dce4df"/>
+            <line x1="45" y1="140" x2="785" y2="140" stroke="#2b3b32" stroke-width="1.5"/>
+            <line x1="45" y1="10" x2="45" y2="140" stroke="#2b3b32" stroke-width="1.5"/>
+            <polyline points="45,55 400,55 760,55" fill="none" stroke="#17804f" stroke-width="3"/>
+            <text x="10" y="60" font-size="12" fill="#495d52">2 W</text>
+            <text x="15" y="144" font-size="12" fill="#495d52">0</text>
+            <text x="740" y="160" font-size="12" fill="#495d52">t (s)</text>
+          </svg>
+        </section>
+
+        <section class="chart-box">
+          <div class="section-title">Energía acumulada (Wh) · línea de umbral</div>
+          <svg viewBox="0 0 800 180" width="100%" height="180" role="img" aria-label="Wireframe gráfico de energía acumulada">
+            <rect x="55" y="15" width="730" height="135" fill="#fafcfb" stroke="#dce4df"/>
+            <line x1="55" y1="35" x2="785" y2="35" stroke="#b42318" stroke-width="2" stroke-dasharray="6 4"/>
+            <text x="580" y="29" font-size="12" font-weight="700" fill="#b42318">Umbral 0,0200 Wh</text>
+            <line x1="55" y1="150" x2="785" y2="150" stroke="#2b3b32" stroke-width="1.5"/>
+            <line x1="55" y1="15" x2="55" y2="150" stroke="#2b3b32" stroke-width="1.5"/>
+            <polyline points="55,150 420,92 600,92" fill="none" stroke="#0b5ed7" stroke-width="3"/>
+            <text x="610" y="96" font-size="11" fill="#495d52">(plano = carga apagada)</text>
+            <text x="5" y="40" font-size="11" fill="#495d52">0,020</text>
+            <text x="5" y="96" font-size="11" fill="#495d52">0,010</text>
+            <text x="30" y="153" font-size="11" fill="#495d52">0</text>
+          </svg>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

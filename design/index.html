@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pulso Energético — Wireframes v0.1</title>
+  <style>
+    :root {
+      --bg: #f6f8f7;
+      --surface: #ffffff;
+      --border: #cfd8d3;
+      --text: #15221b;
+      --muted: #4b5d53;
+      --accent: #0d6e4e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem;
+    }
+    main { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--muted); margin-bottom: 1.5rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .card h2 { font-size: 1.15rem; margin-top: 0; }
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 0.9rem;
+      background: var(--accent);
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+    th { background: #eaf0ec; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Pulso Energético — Wireframes estáticos (B1)</h1>
+    <p class="subtitle">Basados en <code>docs/03-wireframe-principal.md</code> y <code>docs/02-contrato.md</code>. Prototipo navegable completo disponible en la aplicación Angular con <code>?mock=1</code>.</p>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Escritorio / Proyector (1440 px)</h2>
+        <p>Vista de dos columnas: zona/carga y alertas a la izquierda; tres cifras grandes, gráficos W y Wh con umbral, comparación y ficha contextual a la derecha.</p>
+        <a class="btn" href="wireframe-desktop.html">Abrir wireframe escritorio</a>
+      </section>
+      <section class="card">
+        <h2>Móvil (390 px)</h2>
+        <p>Orden prioritario para lectura rápida sin contexto: estado → control → alerta → cifras → gráficos → reporte.</p>
+        <a class="btn" href="wireframe-mobile.html">Abrir wireframe móvil</a>
+      </section>
+    </div>
+
+    <h2>Estados obligatorios cubiertos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Estado</th>
+          <th>Señal visual principal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Inicial</td><td>«Ensayo sin iniciar», cifras en 0 y botón «Iniciar ensayo»</td></tr>
+        <tr><td>Carga apagada</td><td>LED gris, «Carga deshabilitada», restante «Consumo detenido», curva Wh horizontal</td></tr>
+        <tr><td>Carga encendida</td><td>LED verde con pulso suave, «Carga habilitada»</td></tr>
+        <tr><td>Umbral alcanzado</td><td>Banda roja persistente «⚠ Límite alcanzado», borde rojo en energía, título con «⚠», beep único 0,8 s si audio activo</td></tr>
+        <tr><td>Conexión interrumpida</td><td>Banda ámbar «Conexión interrumpida · sin datos de X s» y tramo sombreado en gráficos</td></tr>
+        <tr><td>Reporte disponible</td><td>Texto del reporte, botón «Escuchar» (speechSynthesis) y vista previa de Discord «Simulación local»</td></tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

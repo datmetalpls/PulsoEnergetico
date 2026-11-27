@@ -1,0 +1,268 @@
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --surface-alt: #eaf0ec;
+  --border: #c5d1ca;
+  --text: #122018;
+  --text-muted: #42544a;
+  --accent: #0c6b4b;
+  --accent-contrast: #ffffff;
+  --focus-ring: #005fcc;
+  --danger-bg: #fef1f1;
+  --danger-border: #b42318;
+  --danger-text: #7a1410;
+  --warn-bg: #fff8e6;
+  --warn-border: #b45309;
+  --warn-text: #6b3100;
+  --discord-bg: #f3f4fe;
+  --discord-border: #4e5ae6;
+  --chart-grid: #dce4df;
+  --chart-total: #0b5ed7;
+  --chart-zone-1: #0c6b4b;
+  --chart-zone-2: #9a4d00;
+}
+
+.theme-day {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --surface-alt: #eaf0ec;
+  --border: #c5d1ca;
+  --text: #122018;
+  --text-muted: #42544a;
+  --accent: #0c6b4b;
+  --accent-contrast: #ffffff;
+  --focus-ring: #005fcc;
+  --chart-grid: #dce4df;
+}
+
+.theme-afternoon {
+  --bg: #fbf3e6;
+  --surface: #fffcf7;
+  --surface-alt: #f4e6d0;
+  --border: #d8c3a5;
+  --text: #2a1c0d;
+  --text-muted: #5c4328;
+  --accent: #8f4700;
+  --accent-contrast: #ffffff;
+  --focus-ring: #005fcc;
+  --chart-grid: #e8d8c1;
+}
+
+.theme-night {
+  --bg: #0f1714;
+  --surface: #17231e;
+  --surface-alt: #1f2f29;
+  --border: #334a41;
+  --text: #eff6f2;
+  --text-muted: #b7c9c0;
+  --accent: #3cd099;
+  --accent-contrast: #081c14;
+  --focus-ring: #7ec8ff;
+  --danger-bg: #3b1414;
+  --danger-border: #f97066;
+  --danger-text: #ffd6d3;
+  --warn-bg: #362507;
+  --warn-border: #f59e0b;
+  --warn-text: #fde68a;
+  --discord-bg: #1e223d;
+  --discord-border: #818cf8;
+  --chart-grid: #2a3e36;
+  --chart-total: #60a5fa;
+  --chart-zone-1: #3cd099;
+  --chart-zone-2: #fbbf24;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.pulso-shell {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.pulso-card {
+  background-color: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 0.75rem;
+  color: var(--text);
+}
+
+.pulso-surface-alt {
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.pulso-muted {
+  color: var(--text-muted);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessible focus */
+.pulso-shell :focus-visible {
+  outline: 3px solid var(--focus-ring) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+.btn-pulso-primary {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  border: 1.5px solid var(--accent);
+  font-weight: 700;
+}
+
+.btn-pulso-primary:hover,
+.btn-pulso-primary:focus-visible {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  filter: brightness(1.08);
+}
+
+.btn-pulso-outline {
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  font-weight: 600;
+}
+
+.btn-pulso-outline:hover {
+  background-color: var(--surface-alt);
+  color: var(--text);
+}
+
+.form-select,
+.form-control {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.form-select:focus,
+.form-control:focus {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.badge-sim {
+  background-color: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.375rem;
+}
+
+/* LED indicator */
+.led-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+}
+
+.led-green {
+  background-color: #16a34a;
+  color: #0d5c2b;
+  animation: pulso-led 1.8s ease-in-out infinite;
+}
+
+.led-off {
+  background-color: #6c757d;
+  color: #495057;
+}
+
+.led-amber {
+  background-color: #f59e0b;
+  color: #92400e;
+}
+
+.led-red {
+  background-color: #dc2626;
+  color: #7f1d1d;
+}
+
+@keyframes pulso-led {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .led-green { animation: none; }
+}
+
+/* Alert & disconnection bands */
+.band-danger {
+  background-color: var(--danger-bg);
+  border: 2px solid var(--danger-border);
+  color: var(--danger-text);
+  border-radius: 0.65rem;
+}
+
+.band-warn {
+  background-color: var(--warn-bg);
+  border: 2px solid var(--warn-border);
+  color: var(--warn-text);
+  border-radius: 0.65rem;
+}
+
+.metric-alert-border {
+  border: 2px solid var(--danger-border) !important;
+}
+
+.discord-card {
+  background-color: var(--discord-bg);
+  border: 1.5px dashed var(--discord-border);
+  border-radius: 0.65rem;
+}
+
+.metric-value {
+  font-size: clamp(1.65rem, 2.5vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+/* Desktop 2-column layout and Mobile priority ordering:
+   estado -> control -> alerta -> cifras -> graficos */
+.workspace-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  grid-template-areas:
+    "controls metrics"
+    "alerts charts"
+    "alerts extras";
+  gap: 1rem;
+  align-items: start;
+}
+
+.area-controls { grid-area: controls; }
+.area-alerts   { grid-area: alerts; }
+.area-metrics  { grid-area: metrics; }
+.area-charts   { grid-area: charts; }
+.area-extras   { grid-area: extras; }
+
+@media (max-width: 991.98px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "controls"
+      "alerts"
+      "metrics"
+      "charts"
+      "extras";
+  }
+}
