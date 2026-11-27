@@ -1,0 +1,40 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  angular:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: frontend
+  django:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: pulso
+          POSTGRES_USER: pulso
+          POSTGRES_PASSWORD: ci-only
+        ports: ["5432:5432"]
+        options: --health-cmd="pg_isready -U pulso" --health-interval=2s --health-retries=30
+    env:
+      DJANGO_SECRET_KEY: ci-only-key
+      POSTGRES_HOST: localhost
+      POSTGRES_PASSWORD: ci-only
+      DEMO_CUENCA_PASSWORD: ci-cuenca
+      DEMO_PUENTE_PASSWORD: ci-puente
+      DEMO_OBSERVER_PASSWORD: ci-observer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.txt
+      - run: python manage.py makemigrations --check --dry-run && python manage.py test
+        working-directory: backend
