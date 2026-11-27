@@ -19,7 +19,7 @@ Responsable: Claude (líder técnico). Cambios al contrato solo mediante Claude;
 | `time_to_threshold_s` | s | `remaining_wh × 3600 / total_power_w`; `null` si potencia = 0 («Consumo detenido») |
 | `elapsed_s` | s | **Tiempo del ensayo** (reloj de energía): segundos simulados procesados. Único reloj que entra en Wh |
 | `on_seconds` | s | Segundos de consumo efectivo de una zona (potencia > 0) |
-| `scenario_clock` | HH:MM | **Hora del escenario** (reloj virtual mostrado). Independiente de `elapsed_s` |
+| `scenario_clock` | HH:MM:SS | **Hora del escenario** (reloj virtual mostrado). Independiente de `elapsed_s` |
 | `budget_kwh_day` | kWh/jornada | Presupuesto del recinto; `threshold_wh = budget_kwh_day × 1000` |
 
 Regla: la interfaz nunca recalcula Wh; solo formatea. Formato en pantalla: `2,00 W`, `0,0100 Wh` (banco, 4 decimales), `0,245 kWh` (recinto, 3 decimales), coma decimal `es-CL`. Siempre unidad junto al valor.
