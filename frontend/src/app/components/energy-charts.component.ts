@@ -65,7 +65,7 @@ interface GapRect {
               [attr.x]="g.x + g.width / 2"
               y="28"
               text-anchor="middle"
-              font-size="11"
+              font-size="13"
               font-weight="700"
               fill="var(--warn-text)"
             >
@@ -78,17 +78,17 @@ interface GapRect {
           <line x1="54" y1="12" x2="54" y2="154" stroke="var(--text)" stroke-width="1.5" />
 
           <!-- Y labels -->
-          <text x="48" y="18" text-anchor="end" font-size="11" fill="var(--text-muted)">
+          <text x="48" y="18" text-anchor="end" font-size="13" fill="var(--text-muted)">
             {{ formatW(maxPower()) }}
           </text>
-          <text x="48" y="87" text-anchor="end" font-size="11" fill="var(--text-muted)">
+          <text x="48" y="87" text-anchor="end" font-size="13" fill="var(--text-muted)">
             {{ formatW(maxPower() / 2) }}
           </text>
-          <text x="48" y="156" text-anchor="end" font-size="11" fill="var(--text-muted)">0 W</text>
+          <text x="48" y="156" text-anchor="end" font-size="13" fill="var(--text-muted)">0 W</text>
 
           <!-- X labels -->
-          <text x="54" y="174" font-size="11" fill="var(--text-muted)">0 s</text>
-          <text x="744" y="174" text-anchor="end" font-size="11" fill="var(--text-muted)">
+          <text x="54" y="176" font-size="13" fill="var(--text-muted)">0 s</text>
+          <text x="744" y="176" text-anchor="end" font-size="13" fill="var(--text-muted)">
             {{ maxT() }} s
           </text>
 
@@ -139,7 +139,7 @@ interface GapRect {
               [attr.x]="g.x + g.width / 2"
               y="30"
               text-anchor="middle"
-              font-size="11"
+              font-size="13"
               font-weight="700"
               fill="var(--warn-text)"
             >
@@ -163,17 +163,17 @@ interface GapRect {
           <line x1="64" y1="14" x2="64" y2="162" stroke="var(--text)" stroke-width="1.5" />
 
           <!-- Y labels -->
-          <text x="58" y="20" text-anchor="end" font-size="11" fill="var(--text-muted)">
+          <text x="58" y="20" text-anchor="end" font-size="13" fill="var(--text-muted)">
             {{ formatEnergyAxis(maxEnergy()) }}
           </text>
-          <text x="58" y="90" text-anchor="end" font-size="11" fill="var(--text-muted)">
+          <text x="58" y="90" text-anchor="end" font-size="13" fill="var(--text-muted)">
             {{ formatEnergyAxis(maxEnergy() / 2) }}
           </text>
-          <text x="58" y="164" text-anchor="end" font-size="11" fill="var(--text-muted)">0</text>
+          <text x="58" y="164" text-anchor="end" font-size="13" fill="var(--text-muted)">0</text>
 
           <!-- X labels -->
-          <text x="64" y="182" font-size="11" fill="var(--text-muted)">0 s</text>
-          <text x="744" y="182" text-anchor="end" font-size="11" fill="var(--text-muted)">
+          <text x="64" y="184" font-size="13" fill="var(--text-muted)">0 s</text>
+          <text x="744" y="184" text-anchor="end" font-size="13" fill="var(--text-muted)">
             {{ maxT() }} s
           </text>
 

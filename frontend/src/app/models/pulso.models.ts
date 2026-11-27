@@ -73,6 +73,7 @@ export interface ZoneState {
   indicator: ZoneIndicator;
   voltage_v: number;
   current_a: number;
+  setpoint_current_a?: number | null;
   max_current_a: number | null;
   intensity_pct: number | null;
   power_w: number;

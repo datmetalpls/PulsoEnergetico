@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EnergyChartsComponent } from './components/energy-charts.component';
-import { BandKey, MockStateKey } from './models/pulso.models';
+import { BandKey, MockStateKey, StateResponse, ZoneState } from './models/pulso.models';
 import { AudioAlertService } from './services/audio-alert.service';
 import { PulsoStoreService } from './services/pulso-store.service';
-import { SpeechReportService } from './services/speech-report.service';
 import {
   formatCurrent,
   formatDecimal,
@@ -12,7 +11,6 @@ import {
   formatEnergy,
   formatPower,
   formatVoltage,
-  sourceLabel,
 } from './utils/format';
 
 @Component({
@@ -24,7 +22,6 @@ import {
 export class AppComponent implements OnInit, OnDestroy {
   readonly store = inject(PulsoStoreService);
   readonly audio = inject(AudioAlertService);
-  readonly speech = inject(SpeechReportService);
 
   readonly showLogin = signal(false);
   readonly loginUsername = signal('operador_cuenca');
@@ -36,7 +33,6 @@ export class AppComponent implements OnInit, OnDestroy {
     { key: 'encendida', label: '3. Carga encendida' },
     { key: 'umbral', label: '4. Umbral alcanzado' },
     { key: 'sin_conexion', label: '5. Conexión interrumpida' },
-    { key: 'reporte', label: '6. Reporte disponible' },
   ];
 
   readonly bands: Array<{ key: BandKey; label: string; icon: string }> = [
@@ -99,19 +95,36 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  listenReport(): void {
-    const existing = this.store.report();
-    if (existing) {
-      this.speech.speak(existing.text);
-      return;
-    }
-    this.store.loadReport();
-    setTimeout(() => {
-      const rep = this.store.report();
-      if (rep) {
-        this.speech.speak(rep.text);
+  sessionStatusText(s: StateResponse): string {
+    if (s.session.total_power_w <= 0) {
+      if (s.session.status === 'idle') {
+        return 'Ensayo sin iniciar · Consumo detenido';
       }
-    }, 150);
+      if (s.session.alert_fired) {
+        return 'Umbral alcanzado · Consumo detenido';
+      }
+      if (!s.session.connected) {
+        return 'Conexión interrumpida · Consumo detenido';
+      }
+      return 'Consumo detenido';
+    }
+    if (!s.session.connected) {
+      return 'Conexión interrumpida';
+    }
+    if (s.session.alert_fired) {
+      return 'Umbral alcanzado';
+    }
+    return 'Consumiendo';
+  }
+
+  benchKnobAriaText(zone: ZoneState): string {
+    const val = this.fmtCurrent(this.store.getBenchKnobCurrent(zone));
+    return zone.on ? `${val}, carga habilitada` : `${val}, preajuste con carga apagada`;
+  }
+
+  intensityAriaText(zone: ZoneState): string {
+    const pct = zone.intensity_pct ?? 0;
+    return zone.on ? `${pct} por ciento` : `${pct} por ciento, preajuste con zona apagada`;
   }
 
   // Formatting helpers exposed to template
@@ -121,5 +134,4 @@ export class AppComponent implements OnInit, OnDestroy {
   fmtVoltage = formatVoltage;
   fmtDuration = formatDuration;
   fmtDecimal = formatDecimal;
-  fmtSource = sourceLabel;
 }
