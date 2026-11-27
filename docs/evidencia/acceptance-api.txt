@@ -1,0 +1,21 @@
+PASS login operador_cuenca 200
+PASS 5 V × 0,40 A = 2 W 2.0
+PASS 18 s ≈ 0,010 Wh 0.01
+PASS 10 s apagado conserva acumulado 0.01
+PASS 36 s efectivos ≈ 0,020 Wh 0.02
+PASS una sola alerta 1
+PASS seguir consumiendo no repite alerta 1
+PASS siguiente franja conserva Wh y elapsed_s ('day', 'afternoon')
+PASS refresco / segunda pestaña ven el mismo ensayo 0.02277777777777778
+PASS observador no puede operar (403) 403
+PASS operador Cuenca no opera Puente Alto (403) 403
+PASS reenviar lote no duplica Wh (0.0016666666666666666, 0.001667)
+PASS Cuenca: sala apagada → 0 W 0.0
+PASS Cuenca: sala conserva su acumulado 40.0
+PASS Cuenca: potencia total baja y salón sigue (240.0, 160.0)
+PASS Puente Alto conserva su propio estado 26.666666666666668
+PASS Inversa: Puente Alto sala 0 W, conserva Wh, salón sigue 13.333333333333334
+PASS Inversa: Cuenca no cambia 199.99999999999997
+PASS comparación: diferencia = 80 W × (dur − fin reunión)/3600 240.0
+
+19/19 PASS
