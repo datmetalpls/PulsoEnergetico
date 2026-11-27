@@ -45,7 +45,7 @@ def state_json(session, user):
     alerts = [{'id': str(a.id), 'kind': a.kind, 't_s': a.t_s, 'energy_wh': a.energy_wh,
         'threshold_wh': a.threshold_wh, 'channel': a.channel,
         'channel_label': 'Aviso del navegador (imita el buzzer)' if a.channel == 'browser' else 'Buzzer físico en Wokwi',
-        'message': f'Se alcanzó el umbral de {a.threshold_wh:.4f} Wh'.replace('.', ','),
+        'message': ('Se alcanzó el umbral de ' + (f'{a.threshold_wh / 1000:.3f} kWh' if session.site.kind == 'venue' else f'{a.threshold_wh:.4f} Wh').replace('.', ',')),
         'acknowledged': a.acknowledged_at is not None,
         'discord_sent_at': a.discord_sent_at.isoformat() if a.discord_sent_at else None} for a in session.alerts.order_by('id')]
     zones = []

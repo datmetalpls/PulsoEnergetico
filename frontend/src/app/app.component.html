@@ -732,7 +732,7 @@
                 @if (s.alerts.length > 0 || s.session.alert_fired) {
                   <div class="band-danger p-3 mb-2" role="alert">
                     <div class="fw-bold mb-1">
-                      ⚠ UMBRAL ALCANZADO: {{ fmtEnergy(s.session.threshold_wh, s.site.kind) }}
+                      ⚠ UMBRAL ALCANZADO: {{ fmtEnergy(s.alerts.length ? s.alerts[0].threshold_wh : s.session.threshold_wh, s.site.kind) }}
                     </div>
                     <div class="small fw-semibold mb-1">
                       @if (audio.soundEnabled()) {
